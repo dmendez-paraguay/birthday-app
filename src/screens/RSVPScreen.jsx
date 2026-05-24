@@ -118,7 +118,7 @@ export default function RSVPScreen({ cfg, nav }) {
             <div key={r.id || i} style={{
               ...cardStyle(t), padding: '12px 16px',
               display: 'flex', alignItems: 'center', gap: 12,
-              animation: 'appear 0.3s ease-out', animationDelay: `${i * 0.04}s`, opacity: 0,
+              animation: 'appear 0.3s ease-out forwards', animationDelay: `${i * 0.04}s`, opacity: 0,
             }}>
               <div style={{ fontSize: 30 }}>{r.emoji}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
