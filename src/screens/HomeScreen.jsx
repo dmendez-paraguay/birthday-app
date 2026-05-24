@@ -1,0 +1,132 @@
+import { useState, useEffect } from 'react'
+import { T, btnStyle } from '../themes.js'
+import BgLayer from '../components/BgLayer.jsx'
+import TimerBox from '../components/TimerBox.jsx'
+
+function useCountdown(date) {
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, done: false })
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(date) - new Date()
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0, done: true })
+      setT({
+        d: Math.floor(diff / 864e5),
+        h: Math.floor((diff % 864e5) / 36e5),
+        m: Math.floor((diff % 36e5) / 6e4),
+        s: Math.floor((diff % 6e4) / 1e3),
+        done: false,
+      })
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [date])
+  return t
+}
+
+export default function HomeScreen({ cfg, nav }) {
+  const t = T[cfg.style]
+  const time = useCountdown(cfg.date)
+  const p = n => String(n).padStart(2, '0')
+
+  return (
+    <div style={{
+      background: t.bg, minHeight: '100vh',
+      position: 'relative', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      fontFamily: t.fB,
+    }}>
+      <BgLayer style={cfg.style} />
+      <div style={{
+        position: 'relative', zIndex: 10,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: '36px 20px 110px', gap: 22, width: '100%', maxWidth: 480,
+      }}>
+        {/* Hero */}
+        <div style={{
+          fontSize: 'clamp(64px,16vw,88px)',
+          animation: 'hero-bounce 2.2s ease-in-out infinite',
+          filter: `drop-shadow(0 10px 28px ${t.a1}55)`,
+        }}>🎂</div>
+
+        {/* Title */}
+        <div style={{ textAlign: 'center' }}>
+          {cfg.style === 'fiesta' ? (
+            <div style={{
+              fontFamily: t.fH, fontSize: 'clamp(16px,4vw,26px)',
+              background: `linear-gradient(90deg,${t.a1},${t.a2},${t.a3},${t.a1})`,
+              backgroundSize: '300%',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              animation: 'rainbow 4s linear infinite',
+              textAlign: 'center', lineHeight: 1.4,
+            }}>
+              {time.done
+                ? `¡FELIZ CUMPLE ${cfg.name.toUpperCase()}!`
+                : `¡${cfg.name.toUpperCase()} CUMPLE ${cfg.age} AÑOS!`}
+            </div>
+          ) : (
+            <div style={{
+              fontFamily: t.fH, fontSize: 'clamp(15px,3.8vw,24px)',
+              color: t.a3, textAlign: 'center', lineHeight: 1.4,
+              textShadow: cfg.style === 'arcade' ? `0 0 22px ${t.a3}` : undefined,
+            }}>
+              {time.done
+                ? `¡FELIZ CUMPLE\n${cfg.name}!`
+                : `¡${cfg.name} CUMPLE\n${cfg.age} AÑOS!`}
+            </div>
+          )}
+        </div>
+
+        {/* Countdown or celebration */}
+        {!time.done ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {[[p(time.d), 'DÍAS'], [p(time.h), 'HRS'], [p(time.m), 'MIN'], [p(time.s), 'SEG']].map(
+              ([v, l], i, a) => (
+                <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TimerBox val={v} lbl={l} style={cfg.style} />
+                  {i < a.length - 1 && (
+                    <div style={{
+                      color: t.a2, fontSize: 'clamp(22px,6vw,30px)',
+                      marginBottom: 20, animation: 'blink 1s step-end infinite',
+                    }}>:</div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        ) : (
+          <div style={{
+            fontFamily: t.fH, color: t.a2,
+            fontSize: 'clamp(13px,3.5vw,20px)',
+            animation: 'pulse 1s ease-in-out infinite', textAlign: 'center',
+          }}>🎉 ¡HOY ES EL DÍA! 🎉</div>
+        )}
+
+        {/* CTA */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320, marginTop: 8 }}>
+          <button onClick={() => nav('game')} style={{ ...btnStyle(t), width: '100%', fontSize: 'clamp(9px,2.5vw,13px)' }}>
+            🎮 {cfg.style === 'kawaii' ? '¡Jugar ahora!' : 'JUGAR AHORA'}
+          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <button onClick={() => nav('lb')} style={{ ...btnStyle(t, true), textAlign: 'center' }}>
+              🏆 {cfg.style === 'kawaii' ? 'Campeones' : 'CAMPEONES'}
+            </button>
+            <button onClick={() => nav('rsvp')} style={{ ...btnStyle(t, true), textAlign: 'center' }}>
+              📋 {cfg.style === 'kawaii' ? 'Asistencia' : 'ASISTENCIA'}
+            </button>
+          </div>
+        </div>
+
+        {/* Kawaii decorations */}
+        {cfg.style === 'kawaii' && ['🌸', '⭐', '💜', '🎀'].map((e, i) => (
+          <div key={i} style={{
+            position: 'absolute', fontSize: i % 2 ? 24 : 18, opacity: 0.5,
+            top: `${15 + i * 18}%`, left: i % 2 ? '8%' : '88%',
+            animation: `hero-bounce ${2.5 + i * 0.5}s ${i * 0.4}s ease-in-out infinite`,
+            pointerEvents: 'none',
+          }}>{e}</div>
+        ))}
+      </div>
+    </div>
+  )
+}

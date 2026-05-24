@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      target: dev          # usa la etapa "dev" del Dockerfile
+    ports:
+      - "5173:5173"        # abre http://localhost:5173
+    volumes:
+      - .:/app             # hot-reload: sincroniza tu carpeta local
+      - /app/node_modules  # evita sobreescribir node_modules del contenedor
+    env_file:
+      - .env               # carga tus variables de Firebase
+    restart: unless-stopped
