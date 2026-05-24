@@ -4,6 +4,20 @@ import BgLayer from '../components/BgLayer.jsx'
 import { saveConfig, clearLeaderboard, clearRsvp } from '../lib/db.js'
 import { Audio } from '../lib/audio.js'
 
+function firebaseSaveErrorMessage(error) {
+  const message = error?.message || ''
+  if (message.includes('firestore.googleapis.com') || message.includes('SERVICE_DISABLED')) {
+    return 'Firestore no esta activado en Firebase'
+  }
+  if (error?.code === 'permission-denied') {
+    return 'Firebase rechazo el guardado: revisa las reglas de Firestore'
+  }
+  if (error?.code === 'unavailable') {
+    return 'Firebase no esta disponible: revisa la conexion'
+  }
+  return `No se pudo guardar en Firebase${error?.code ? ` (${error.code})` : ''}`
+}
+
 export default function AdminScreen({ cfg, setCfg, nav }) {
   const t = T[cfg.style]
   const [pin, setPin] = useState('')
@@ -11,6 +25,7 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
   const [form, setForm] = useState({ ...cfg })
   const [tab, setTab] = useState('config')
   const [msg, setMsg] = useState('')
+  const [saving, setSaving] = useState(false)
   const [pinErr, setPinErr] = useState('')
 
   const flash = text => { setMsg(text); setTimeout(() => setMsg(''), 2500) }
@@ -21,10 +36,19 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
   }
 
   const saveAll = async () => {
-    await saveConfig(form)
-    setCfg(form)
-    flash('✓ Configuración guardada')
-    Audio.playChime()
+    if (saving) return
+    setSaving(true)
+    try {
+      await saveConfig(form)
+      setCfg(form)
+      flash('✓ Configuración guardada')
+      Audio.playChime()
+    } catch (error) {
+      console.error('No se pudo guardar la configuracion en Firebase:', error)
+      flash(firebaseSaveErrorMessage(error))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const resetLb = async () => {
@@ -124,8 +148,8 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
             <div><span style={lbl}>NUEVO PIN DE ADMIN</span>
               <input type="password" value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value })} maxLength={8} style={inp} />
             </div>
-            <button onClick={saveAll} style={{ ...btnStyle(t), marginTop: 6, width: '100%' }}>
-              💾 GUARDAR CAMBIOS
+            <button onClick={saveAll} disabled={saving} style={{ ...btnStyle(t), marginTop: 6, width: '100%', opacity: saving ? 0.65 : 1 }}>
+              {saving ? 'GUARDANDO...' : '💾 GUARDAR CAMBIOS'}
             </button>
           </div>
         )}
@@ -156,8 +180,8 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
                 </div>
               </button>
             ))}
-            <button onClick={saveAll} style={{ ...btnStyle(t), marginTop: 6, width: '100%' }}>
-              💾 APLICAR ESTILO
+            <button onClick={saveAll} disabled={saving} style={{ ...btnStyle(t), marginTop: 6, width: '100%', opacity: saving ? 0.65 : 1 }}>
+              {saving ? 'GUARDANDO...' : '💾 APLICAR ESTILO'}
             </button>
           </div>
         )}
