@@ -1,9 +1,9 @@
 /**
- * constants.js — Configuración centralizada del Space Shooter.
- * Ajustar aquí para cambiar gameplay sin tocar lógica.
+ * constants.js — Configuración centralizada del Space Blaster.
+ * 5 sectores, fases del boss, power-ups, combo y shake de cámara.
  */
 
-// ── Dimensiones virtuales del área de juego ───────────────────
+// ── Dimensiones virtuales ─────────────────────────────────────
 export const GAME_W = 390
 export const GAME_H = 844
 
@@ -11,33 +11,44 @@ export const GAME_H = 844
 export const PLAYER = {
   width: 44,
   height: 52,
-  speed: 6,              // px por "frame-equivalente" a 60fps
+  speed: 6,
   health: 5,
-  shootInterval: 14,     // frames entre disparos automáticos
+  shootInterval: 14,
   bulletSpeed: 10,
-  invincibleFrames: 90,  // frames de invencibilidad tras recibir daño
+  invincibleFrames: 90,
 }
 
 // ── Boss ──────────────────────────────────────────────────────
 export const BOSS = {
   width: 110,
   height: 90,
-  speed: 1.2,            // px por frame base
-  shootInterval: 55,     // frames base entre disparos del boss
   bulletSpeed: 3.5,
 }
 
-// ── Niveles ───────────────────────────────────────────────────
-// Cada nivel incrementa salud, velocidad y cadencia del boss.
+// ── 5 Sectores con emoji de boss único ───────────────────────
 export const LEVELS = [
-  { bossHealth: 60,  bossSpeed: 1.0, bossShootInterval: 65, label: 'Sector I'   },
-  { bossHealth: 85,  bossSpeed: 1.4, bossShootInterval: 48, label: 'Sector II'  },
-  { bossHealth: 115, bossSpeed: 1.8, bossShootInterval: 36, label: 'Sector III' },
+  { bossHealth: 50,  bossSpeed: 0.9,  bossShootInterval: 72, label: 'Sector I',   bossEmoji: '👾' },
+  { bossHealth: 75,  bossSpeed: 1.25, bossShootInterval: 56, label: 'Sector II',  bossEmoji: '👽' },
+  { bossHealth: 100, bossSpeed: 1.55, bossShootInterval: 44, label: 'Sector III', bossEmoji: '🤖' },
+  { bossHealth: 135, bossSpeed: 1.9,  bossShootInterval: 34, label: 'Sector IV',  bossEmoji: '💀' },
+  { bossHealth: 170, bossSpeed: 2.35, bossShootInterval: 26, label: 'Sector V',   bossEmoji: '☠️' },
+]
+
+// ── Fases del boss (por % de HP restante) ────────────────────
+// Cada fase multiplica velocidad y reduce intervalo de disparo
+export const BOSS_PHASES = [
+  { phase: 1, hpPct: 1.00, speedBonus: 0.0,  shootMult: 1.00, glowColor: '#ff006e' },
+  { phase: 2, hpPct: 0.65, speedBonus: 0.5,  shootMult: 0.68, glowColor: '#ff6600' }, // Agresivo
+  { phase: 3, hpPct: 0.35, speedBonus: 1.0,  shootMult: 0.48, glowColor: '#ff0000' }, // Enojado
 ]
 
 // ── Patrones de disparo del boss ──────────────────────────────
-// El boss alterna estos patrones de forma cíclica.
-export const BOSS_PATTERNS = ['single', 'spread3', 'aimed', 'spread3', 'circle6']
+// Cada fase tiene su propio set de patrones
+export const BOSS_PATTERNS = {
+  1: ['single', 'spread3', 'aimed'],
+  2: ['spread3', 'aimed', 'spread3', 'circle6'],
+  3: ['circle6', 'aimed', 'spread5', 'aimed', 'circle6'],
+}
 
 // ── Proyectiles ───────────────────────────────────────────────
 export const BULLET = {
@@ -51,11 +62,41 @@ export const SCORE = {
   killBoss: 500,
 }
 
+// ── Power-ups ─────────────────────────────────────────────────
+export const POWERUP = {
+  width: 30, height: 30,
+  fallSpeed: 2.2,
+  // Caen del boss al llegar a estas fases
+  dropAtPhase2: 'rapidFire',  // al 65% HP
+  dropAtPhase3: 'shield',     // al 35% HP
+  types: {
+    shield:    { frames: 280, emoji: '🛡️', color: '#00d4ff',  label: 'ESCUDO'  },
+    rapidFire: { frames: 220, emoji: '⚡', color: '#ffd700',  label: 'RÁPIDO'  },
+    bomb:      { frames: 0,   emoji: '💣', color: '#ff006e',  label: '¡BOMBA!' },
+  },
+}
+
+// ── Combo ─────────────────────────────────────────────────────
+export const COMBO = {
+  resetFrames: 160,       // Frames sin golpear antes de resetear
+  maxMultiplier: 5,
+  hitsPerLevel: 4,        // golpes para subir un nivel de multiplicador
+}
+
+// ── Camera shake (intensidad en px virtuales) ─────────────────
+export const SHAKE = {
+  bossHit:    1.5,
+  playerHit:  7,
+  bossPhase:  10,
+  bossDead:   16,
+}
+
+// ── Efectos visuales ──────────────────────────────────────────
+export const HIT_FLASH_FRAMES   = 6
+export const EFFECT_TTL_HIT     = 24
+export const EFFECT_TTL_EXPLODE = 50
+export const PARTICLE_COUNT     = 14   // partículas por explosión
+
 // ── Fondo ─────────────────────────────────────────────────────
 export const STARS_COUNT  = 80
 export const NEBULA_COUNT = 3
-
-// ── Efectos visuales ──────────────────────────────────────────
-export const HIT_FLASH_FRAMES   = 6   // frames que dura el flash del boss
-export const EFFECT_TTL_HIT     = 25  // frames que duran los efectos de impacto
-export const EFFECT_TTL_EXPLODE = 45  // frames de explosión
