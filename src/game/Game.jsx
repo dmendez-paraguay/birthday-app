@@ -6,6 +6,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { T, btnStyle, EMOJIS } from '../themes.js'
+import BackButton from '../components/BackButton.jsx'
 import { useGameLoop } from './useGameLoop.js'
 import { ShooterAudio } from './audio.js'
 import { saveShooterScore, loadShooterLeaderboard } from './firebase.js'
@@ -461,17 +462,7 @@ function IntroScreen({ level, onStart, onBack }) {
           ▶ JUGAR
         </button>
 
-        <button onClick={onBack} style={{
-          fontFamily: "'Press Start 2P',monospace",
-          fontSize: 9, padding: '10px 20px',
-          background: 'transparent',
-          border: '1px solid rgba(255,255,255,0.2)',
-          color: 'rgba(255,255,255,0.45)',
-          borderRadius: 8, cursor: 'pointer',
-          width: '100%',
-        }}>
-          ← VOLVER
-        </button>
+        <BackButton t={T.arcade} onClick={onBack} style={{ width: '100%', justifyContent: 'center' }} />
       </div>
     </Overlay>
   )
@@ -502,15 +493,7 @@ function PauseScreen({ onResume, onBack }) {
           }}>
             ▶ CONTINUAR
           </button>
-          <button onClick={onBack} style={{
-            fontFamily: "'Press Start 2P',monospace", fontSize: 9,
-            padding: '11px 20px', background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: 'rgba(255,255,255,0.45)',
-            borderRadius: 8, cursor: 'pointer',
-          }}>
-            ← SALIR
-          </button>
+          <BackButton t={T.arcade} onClick={onBack} style={{ alignSelf: 'stretch', justifyContent: 'center' }} />
         </div>
       </div>
     </Overlay>
@@ -670,14 +653,7 @@ function VictoryScreen({ score, level, onNextLevel, onRetry, onBack, saving }) {
           }}>
             🔄 REINTENTAR
           </button>
-          <button onClick={onBack} style={{
-            fontFamily: "'Press Start 2P',monospace", fontSize: 9,
-            padding: '11px', background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)',
-            borderRadius: 8, cursor: 'pointer',
-          }}>
-            ← SALIR
-          </button>
+          <BackButton t={T.arcade} onClick={onBack} style={{ alignSelf: 'stretch', justifyContent: 'center' }} />
         </div>
       </div>
     </Overlay>
@@ -723,15 +699,7 @@ function DefeatScreen({ score, onRetry, onBack }) {
           }}>
             🔄 REINTENTAR
           </button>
-          <button onClick={onBack} style={{
-            fontFamily: "'Press Start 2P',monospace", fontSize: 9,
-            padding: '11px 20px', background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: 'rgba(255,255,255,0.45)',
-            borderRadius: 8, cursor: 'pointer',
-          }}>
-            ← VOLVER
-          </button>
+          <BackButton t={T.arcade} onClick={onBack} style={{ alignSelf: 'stretch', justifyContent: 'center' }} />
         </div>
       </div>
     </Overlay>

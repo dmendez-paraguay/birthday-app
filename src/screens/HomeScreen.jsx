@@ -91,15 +91,31 @@ export default function HomeScreen({ cfg, nav }) {
 
         {/* Countdown or celebration */}
         {!time.done ? (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            gap: 'clamp(4px, 1.8vw, 10px)',
+            alignItems: 'center',
+            width: '100%',
+            justifyContent: 'center',
+            maxWidth: 400,
+            // Evita desbordamiento en pantallas pequeñas (≤360px)
+            overflow: 'hidden',
+          }}>
             {[[p(time.d), 'DÍAS'], [p(time.h), 'HRS'], [p(time.m), 'MIN'], [p(time.s), 'SEG']].map(
               ([v, l], i, a) => (
-                <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div key={l} style={{
+                  display: 'flex', alignItems: 'center',
+                  gap: 'clamp(3px, 1.5vw, 8px)',
+                  flexShrink: 0,
+                }}>
                   <TimerBox val={v} lbl={l} style={cfg.style} />
                   {i < a.length - 1 && (
                     <div style={{
-                      color: t.a2, fontSize: 'clamp(22px,6vw,30px)',
-                      marginBottom: 20, animation: 'blink 1s step-end infinite',
+                      color: t.a2,
+                      fontSize: 'clamp(16px, 4.5vw, 28px)',
+                      marginBottom: 18,
+                      animation: 'blink 1s step-end infinite',
+                      flexShrink: 0,
                     }}>:</div>
                   )}
                 </div>
@@ -143,7 +159,7 @@ export default function HomeScreen({ cfg, nav }) {
 
         {/* CTA */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320, marginTop: 8 }}>
-          <button onClick={() => nav('game')} style={{ ...btnStyle(t), width: '100%', fontSize: 'clamp(9px,2.5vw,13px)' }}>
+          <button onClick={() => nav('games')} style={{ ...btnStyle(t), width: '100%', fontSize: 'clamp(9px,2.5vw,13px)' }}>
             🎮 {cfg.style === 'kawaii' ? '¡Jugar ahora!' : 'JUGAR AHORA'}
           </button>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

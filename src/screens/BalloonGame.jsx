@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { T, BALLOON_COLS, BALLOON_FACE, btnStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
+import BackButton from '../components/BackButton.jsx'
 import GameOver from './GameOver.jsx'
 import { Audio } from '../lib/audio.js'
 
@@ -102,10 +103,10 @@ export default function BalloonGame({ cfg, nav }) {
         background: t.card, borderBottom: `1px solid ${t.border}`,
         backdropFilter: 'blur(16px)',
       }}>
-        <button
-          onClick={() => { clearInterval(timerRef.current); clearSpawn(); nav('home') }}
-          style={{ ...btnStyle(t, true), padding: '7px 12px' }}
-        >←</button>
+        <BackButton
+          t={t}
+          onClick={() => { clearInterval(timerRef.current); clearSpawn(); nav('games') }}
+        />
         <div style={{ fontFamily: t.fH, color: t.a3, fontSize: 'clamp(10px,2.8vw,16px)' }}>
           {score.toLocaleString()} PTS
         </div>
@@ -134,6 +135,7 @@ export default function BalloonGame({ cfg, nav }) {
             <button onClick={startGame} style={{ ...btnStyle(t), fontSize: 'clamp(10px,3vw,14px)', padding: '14px 32px' }}>
               {cfg.style === 'kawaii' ? '🎈 ¡Jugar!' : '▶ INICIAR'}
             </button>
+            <BackButton t={t} onClick={() => nav('games')} label="Volver" />
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { T, EMOJIS, btnStyle, cardStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
+import BackButton from '../components/BackButton.jsx'
 import { loadRsvp, addRsvp } from '../lib/db.js'
 import { Audio } from '../lib/audio.js'
 
@@ -49,7 +50,7 @@ export default function RSVPScreen({ cfg, nav }) {
       <div style={{ position: 'relative', zIndex: 10, padding: '20px 20px 110px', maxWidth: 500, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
-          <button onClick={() => nav('home')} style={{ ...btnStyle(t, true), padding: '8px 13px' }}>←</button>
+          <BackButton t={t} onClick={() => nav('home')} />
           <div style={{ fontFamily: t.fH, color: t.a1, fontSize: 'clamp(10px,2.8vw,15px)', flex: 1 }}>
             {cfg.style === 'kawaii' ? '📋 Asistencia' : '📋 ASISTENCIA'}
           </div>

@@ -2,7 +2,7 @@ import { T } from '../themes.js'
 
 export default function NavBar({ cfg, nav, screen, muted, toggleMute }) {
   const t = T[cfg.style]
-  const items = [['home','🏠'],['game','🎮'],['shooter','🚀'],['lb','🏆'],['rsvp','📋']]
+  const items = [['home','🏠'],['games','🎮'],['lb','🏆'],['rsvp','📋']]
 
   return (
     <div style={{
@@ -21,7 +21,7 @@ export default function NavBar({ cfg, nav, screen, muted, toggleMute }) {
         pointerEvents: 'all',
       }}>
         {items.map(([s, icon]) => {
-          const active = screen === s
+          const active = screen === s || (s === 'games' && (screen === 'game' || screen === 'shooter'))
           return (
             <button key={s} onClick={() => nav(s)} style={{
               width: 46, height: 46, display: 'flex',
