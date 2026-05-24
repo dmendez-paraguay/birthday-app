@@ -8,6 +8,7 @@ import BalloonGame from './screens/BalloonGame.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import RSVPScreen from './screens/RSVPScreen.jsx'
 import AdminScreen from './screens/AdminScreen.jsx'
+import Game from './game/Game.jsx'
 
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG)
@@ -27,7 +28,7 @@ export default function App() {
 
   const nav = s => {
     Audio.init()
-    if (s !== 'game') Audio.playChime()
+    if (s !== 'game' && s !== 'shooter') Audio.playChime()
     setScreen(s)
   }
 
@@ -62,17 +63,18 @@ export default function App() {
     </div>
   )
 
-  const showNav = screen !== 'game'
+  const showNav = screen !== 'game' && screen !== 'shooter'
 
   return (
     <>
       <style>{GLOBAL_CSS}</style>
       <div style={{ paddingBottom: showNav ? 90 : 0 }}>
-        {screen === 'home'  && <HomeScreen cfg={cfg} nav={nav} />}
-        {screen === 'game'  && <BalloonGame cfg={cfg} nav={nav} />}
-        {screen === 'lb'    && <LeaderboardScreen cfg={cfg} nav={nav} />}
-        {screen === 'rsvp'  && <RSVPScreen cfg={cfg} nav={nav} />}
-        {screen === 'admin' && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
+        {screen === 'home'    && <HomeScreen cfg={cfg} nav={nav} />}
+        {screen === 'game'    && <BalloonGame cfg={cfg} nav={nav} />}
+        {screen === 'shooter' && <Game cfg={cfg} nav={nav} />}
+        {screen === 'lb'      && <LeaderboardScreen cfg={cfg} nav={nav} />}
+        {screen === 'rsvp'    && <RSVPScreen cfg={cfg} nav={nav} />}
+        {screen === 'admin'   && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
       </div>
       {showNav && (
         <NavBar

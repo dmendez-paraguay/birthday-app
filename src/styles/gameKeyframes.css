@@ -1,0 +1,109 @@
+/* gameKeyframes.css — Animaciones exclusivas del Space Shooter */
+
+/* ── Nave del jugador ─────────────────────────────────────── */
+@keyframes ship-thrust {
+  0%,100% { filter: brightness(1) drop-shadow(0 4px 12px #00d4ff88); }
+  50%     { filter: brightness(1.35) drop-shadow(0 8px 24px #00d4ffcc); }
+}
+@keyframes ship-invincible {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.3; }
+}
+
+/* ── Boss ─────────────────────────────────────────────────── */
+@keyframes boss-entry {
+  from { transform: translateY(-160px) scale(0.6); opacity: 0; }
+  to   { transform: translateY(0)      scale(1);   opacity: 1; }
+}
+@keyframes boss-float {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+@keyframes boss-hit {
+  0%,100% { filter: brightness(1)  saturate(1); }
+  50%     { filter: brightness(4)  saturate(0) hue-rotate(180deg); }
+}
+@keyframes boss-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-5px); }
+  60%     { transform: translateX(5px); }
+}
+
+/* ── Proyectiles ─────────────────────────────────────────── */
+@keyframes bullet-player-glow {
+  0%,100% { box-shadow: 0 0 6px 2px #00d4ff, 0 0 2px 0 #fff; }
+  50%     { box-shadow: 0 0 12px 4px #00d4ff, 0 0 4px 1px #fff; }
+}
+@keyframes bullet-boss-spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Efectos de impacto ──────────────────────────────────── */
+@keyframes hit-ring {
+  0%   { opacity: 1;   transform: scale(0.4); }
+  60%  { opacity: 0.7; transform: scale(1.6); }
+  100% { opacity: 0;   transform: scale(2.2); }
+}
+@keyframes explosion {
+  0%   { opacity: 1;   transform: scale(0.5) rotate(0deg); }
+  50%  { opacity: 0.85; transform: scale(1.6) rotate(30deg); }
+  100% { opacity: 0;   transform: scale(2.4) rotate(60deg); }
+}
+@keyframes score-pop {
+  0%   { opacity: 1; transform: translateY(0)   scale(1.3); }
+  100% { opacity: 0; transform: translateY(-56px) scale(1);  }
+}
+
+/* ── HUD ─────────────────────────────────────────────────── */
+@keyframes hp-bar-flash {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.4; }
+}
+@keyframes hud-slide-down {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes hud-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Overlays ────────────────────────────────────────────── */
+@keyframes overlay-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+@keyframes title-glow {
+  0%,100% { text-shadow: 0 0 18px currentColor, 0 0 40px currentColor; }
+  50%     { text-shadow: 0 0 32px currentColor, 0 0 80px currentColor, 0 0 6px #fff; }
+}
+@keyframes victory-pulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.08); }
+}
+@keyframes defeat-shake {
+  0%,100% { transform: rotate(0deg); }
+  25%     { transform: rotate(-4deg); }
+  75%     { transform: rotate(4deg); }
+}
+
+/* ── Fondo espacial ──────────────────────────────────────── */
+@keyframes star-drift {
+  from { transform: translateY(-5px); opacity: 0.3; }
+  to   { transform: translateY(4px);  opacity: 1;   }
+}
+@keyframes nebula-pulse {
+  0%,100% { opacity: 0.12; transform: scale(1); }
+  50%     { opacity: 0.22; transform: scale(1.05); }
+}
+@keyframes planet-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Botón de pausa ──────────────────────────────────────── */
+@keyframes pause-btn-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+  50%     { box-shadow: 0 0 0 6px rgba(0,212,255,0); }
+}
