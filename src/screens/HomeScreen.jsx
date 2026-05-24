@@ -28,6 +28,8 @@ export default function HomeScreen({ cfg, nav }) {
   const t = T[cfg.style]
   const time = useCountdown(cfg.date)
   const p = n => String(n).padStart(2, '0')
+  const ageLabel = Number(cfg.age) === 1 ? 'AÑO' : 'AÑOS'
+  const hasEventInfo = Boolean(cfg.eventTime || cfg.eventPlace || cfg.eventMapUrl)
 
   return (
     <div style={{
@@ -62,7 +64,7 @@ export default function HomeScreen({ cfg, nav }) {
             }}>
               {time.done
                 ? `¡FELIZ CUMPLE ${cfg.name.toUpperCase()}!`
-                : `¡${cfg.name.toUpperCase()} CUMPLE ${cfg.age} AÑOS!`}
+                : `¡${cfg.name.toUpperCase()} CUMPLE ${cfg.age} ${ageLabel}!`}
             </div>
           ) : (
             <div style={{
@@ -72,10 +74,20 @@ export default function HomeScreen({ cfg, nav }) {
             }}>
               {time.done
                 ? `¡FELIZ CUMPLE\n${cfg.name}!`
-                : `¡${cfg.name} CUMPLE\n${cfg.age} AÑOS!`}
+                : `¡${cfg.name} CUMPLE\n${cfg.age} ${ageLabel}!`}
             </div>
           )}
         </div>
+
+        {cfg.welcomeMessage && (
+          <div style={{
+            color: t.fg, fontSize: 'clamp(15px,4vw,20px)',
+            lineHeight: 1.45, textAlign: 'center',
+            maxWidth: 420, opacity: 0.95,
+          }}>
+            {cfg.welcomeMessage}
+          </div>
+        )}
 
         {/* Countdown or celebration */}
         {!time.done ? (
@@ -100,6 +112,33 @@ export default function HomeScreen({ cfg, nav }) {
             fontSize: 'clamp(13px,3.5vw,20px)',
             animation: 'pulse 1s ease-in-out infinite', textAlign: 'center',
           }}>🎉 ¡HOY ES EL DÍA! 🎉</div>
+        )}
+
+        {hasEventInfo && (
+          <div style={{
+            width: '100%', maxWidth: 390,
+            display: 'flex', flexDirection: 'column', gap: 8,
+            padding: '14px 16px',
+            border: `1px solid ${t.border}`,
+            borderRadius: t.r,
+            background: t.hi,
+            color: t.fg,
+            fontSize: 'clamp(13px,3.3vw,16px)',
+            lineHeight: 1.45,
+          }}>
+            {cfg.eventTime && <div>🕕 {cfg.eventTime}</div>}
+            {cfg.eventPlace && <div>📍 {cfg.eventPlace}</div>}
+            {cfg.eventMapUrl && (
+              <a
+                href={cfg.eventMapUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: t.a1, textDecoration: 'none', fontWeight: 700 }}
+              >
+                🗺️ Ver ubicación
+              </a>
+            )}
+          </div>
         )}
 
         {/* CTA */}

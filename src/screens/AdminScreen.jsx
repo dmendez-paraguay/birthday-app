@@ -145,6 +145,18 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
             <div><span style={lbl}>FECHA Y HORA DEL CUMPLEAÑOS</span>
               <input type="datetime-local" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={inp} />
             </div>
+            <div><span style={lbl}>MENSAJE DE BIENVENIDA</span>
+              <input value={form.welcomeMessage || ''} onChange={e => setForm({ ...form, welcomeMessage: e.target.value })} style={inp} />
+            </div>
+            <div><span style={lbl}>HORARIO DEL EVENTO</span>
+              <input value={form.eventTime || ''} onChange={e => setForm({ ...form, eventTime: e.target.value })} style={inp} />
+            </div>
+            <div><span style={lbl}>LUGAR DEL EVENTO</span>
+              <input value={form.eventPlace || ''} onChange={e => setForm({ ...form, eventPlace: e.target.value })} style={inp} />
+            </div>
+            <div><span style={lbl}>LINK DE UBICACION</span>
+              <input type="url" value={form.eventMapUrl || ''} onChange={e => setForm({ ...form, eventMapUrl: e.target.value })} style={inp} />
+            </div>
             <div><span style={lbl}>NUEVO PIN DE ADMIN</span>
               <input type="password" value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value })} maxLength={8} style={inp} />
             </div>
