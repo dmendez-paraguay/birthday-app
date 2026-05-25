@@ -19,6 +19,7 @@ export default function App() {
   const [muted, setMuted] = useState(false)
   const [ready, setReady] = useState(false)
   const [allClearScore, setAllClearScore] = useState(0)
+  const [allClearLevels, setAllClearLevels] = useState(5)
 
   useEffect(() => {
     loadConfig(DEFAULT_CFG).then(d => {
@@ -43,8 +44,9 @@ export default function App() {
     if (!next) { Audio.init(); Audio.startMusic() }
   }
 
-  const handleAllClear = (score) => {
+  const handleAllClear = (score, levels = 5) => {
     setAllClearScore(score)
+    setAllClearLevels(levels)
     setScreen('allclear')
   }
 
@@ -87,7 +89,7 @@ export default function App() {
         {screen === 'rsvp'    && <RSVPScreen cfg={cfg} nav={nav} />}
         {screen === 'admin'   && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
         {screen === 'photos'  && <PhotoGallery cfg={cfg} nav={nav} />}
-        {screen === 'allclear' && <AllClearScreen score={allClearScore} nav={nav} onReplay={() => { setScreen('shooter') }} />}
+        {screen === 'allclear' && <AllClearScreen score={allClearScore} maxLevels={allClearLevels} nav={nav} onReplay={() => { setScreen('shooter') }} />}
       </div>
       {showNav && (
         <NavBar

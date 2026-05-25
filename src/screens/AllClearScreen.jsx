@@ -50,7 +50,7 @@ function AnimatedScore({ target }) {
   )
 }
 
-export default function AllClearScreen({ score, nav, onReplay }) {
+export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) {
   const t = T.arcade
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('🏆')
@@ -64,7 +64,7 @@ export default function AllClearScreen({ score, nav, onReplay }) {
     setSaving(true)
     setError('')
     try {
-      await saveShooterScore({ name: name.trim(), emoji, dance, score, level: LEVELS.length })
+      await saveShooterScore({ name: name.trim(), emoji, dance, score, level: maxLevels })
       setSaved(true)
     } catch (e) {
       setError('Error al guardar. Intenta de nuevo.')
@@ -130,7 +130,7 @@ export default function AllClearScreen({ score, nav, onReplay }) {
           display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center',
           flexWrap: 'wrap',
         }}>
-          {LEVELS.map((lvl, i) => (
+          {LEVELS.slice(0, maxLevels).map((lvl, i) => (
             <div key={i} style={{
               position: 'relative',
               animation: `appear 0.4s ease-out ${i * 0.12}s both`,
