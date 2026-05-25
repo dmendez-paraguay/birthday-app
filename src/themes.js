@@ -70,7 +70,30 @@ input:focus{outline:none;}
 @keyframes conffall{0%{transform:translateY(-10px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
 @keyframes appear{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
 @keyframes rainbow{0%{background-position:0% 50%;}100%{background-position:300% 50%;}}
+@keyframes dance-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes dance-bounce{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-12px) scale(1.25);}}
+@keyframes dance-shake{0%,100%{transform:translateX(0) rotate(0);}25%{transform:translateX(-9px) rotate(-14deg);}75%{transform:translateX(9px) rotate(14deg);}}
+@keyframes dance-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.5);}}
+@keyframes dance-wave{0%,100%{transform:rotate(-22deg) translateX(-2px);}50%{transform:rotate(22deg) translateX(2px);}}
+@keyframes dance-flip{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}
+@keyframes dance-rainbow{from{filter:hue-rotate(0deg) brightness(1.3);}to{filter:hue-rotate(360deg) brightness(1.3);}}
+@keyframes dance-zoom{0%,100%{transform:scale(1) translateY(0);}33%{transform:scale(1.4) translateY(-6px);}66%{transform:scale(0.75) translateY(4px);}}
 `
+
+// ── Bailecitos del ranking ─────────────────────────────────────
+// Cada entrada del leaderboard puede tener su propia animación CSS.
+// `anim` es la string completa de la propiedad CSS `animation`.
+export const DANCES = [
+  { id: 'none',    label: 'Quieto',  anim: '' },
+  { id: 'bounce',  label: 'Rebote',  anim: 'dance-bounce 0.55s ease-in-out infinite' },
+  { id: 'spin',    label: 'Giro',    anim: 'dance-spin 0.7s linear infinite' },
+  { id: 'shake',   label: 'Shake',   anim: 'dance-shake 0.38s ease-in-out infinite' },
+  { id: 'wave',    label: 'Ola',     anim: 'dance-wave 0.8s ease-in-out infinite' },
+  { id: 'pulse',   label: 'Pulso',   anim: 'dance-pulse 0.65s ease-in-out infinite' },
+  { id: 'flip',    label: 'Flip',    anim: 'dance-flip 1.1s linear infinite' },
+  { id: 'zoom',    label: 'Zoom',    anim: 'dance-zoom 0.9s ease-in-out infinite' },
+  { id: 'rainbow', label: 'Color',   anim: 'dance-rainbow 1.4s linear infinite' },
+]
 
 // ── Helpers de estilos reutilizables ───────────────────────────
 export function btnStyle(t, secondary = false, danger = false) {

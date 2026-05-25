@@ -3,12 +3,13 @@
  * 5 niveles · 3 fases del boss · power-ups · combo · partículas · shake
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { T, btnStyle } from '../themes.js'
+import { T, btnStyle, DANCES } from '../themes.js'
 import BackButton from '../components/BackButton.jsx'
 import { useGameLoop } from './useGameLoop.js'
 import { ShooterAudio } from './audio.js'
 import { saveShooterScore, loadShooterLeaderboard } from './firebase.js'
 import { LEVELS, PLAYER, POWERUP, BOSS_PHASES } from './constants.js'
+import DancePicker from '../components/DancePicker.jsx'
 import '../styles/gameKeyframes.css'
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -564,6 +565,7 @@ function PauseScreen({ onResume, onBack }) {
 function VictoryScreen({ score, level, onNextLevel, onRetry, onBack, onSave }) {
   const [name, setName]     = useState('')
   const [emoji, setEmoji]   = useState('🚀')
+  const [dance, setDance]   = useState('bounce')
   const [saved, setSaved]   = useState(false)
   const [ranking, setRanking] = useState([])
   const hasNextLevel = level < LEVELS.length
@@ -573,7 +575,7 @@ function VictoryScreen({ score, level, onNextLevel, onRetry, onBack, onSave }) {
   const handleSave = () => {
     if (!name.trim()) return
     setSaved(true)
-    onSave(name.trim(), emoji, score, level)
+    onSave(name.trim(), emoji, score, level, dance)
   }
 
   return (
@@ -621,6 +623,10 @@ function VictoryScreen({ score, level, onNextLevel, onRetry, onBack, onSave }) {
                 fontFamily: "'Share Tech Mono',monospace", fontSize: 14,
               }}
             />
+            {/* Bailecito */}
+            <div style={{ marginBottom: 10 }}>
+              <DancePicker t={T.arcade} value={dance} onChange={setDance} previewEmoji={emoji} />
+            </div>
             <button onClick={handleSave} disabled={!name.trim()} style={{
               fontFamily: "'Press Start 2P',monospace", fontSize: 9,
               padding: '10px', width: '100%', marginBottom: 10,
@@ -794,8 +800,8 @@ export default function Game({ cfg, nav, onAllClear }) {
     nav('games')
   }
 
-  const handleSaveScore = async (name, emoji, score, lvl) => {
-    try { await saveShooterScore({ name, emoji, score, level: lvl }) }
+  const handleSaveScore = async (name, emoji, score, lvl, dance) => {
+    try { await saveShooterScore({ name, emoji, dance: dance || 'none', score, level: lvl }) }
     catch (e) { console.warn('Error guardando score:', e) }
   }
 

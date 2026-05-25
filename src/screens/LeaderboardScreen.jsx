@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { T, btnStyle, cardStyle } from '../themes.js'
+import { T, btnStyle, cardStyle, DANCES } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import BackButton from '../components/BackButton.jsx'
 import { subscribeLeaderboard } from '../lib/db.js'
@@ -221,7 +221,7 @@ export default function LeaderboardScreen({ cfg, nav }) {
                     {i < 3 ? MEDALS[i] : `#${i + 1}`}
                   </div>
 
-                  {/* Avatar */}
+                  {/* Avatar con bailecito */}
                   <div style={{
                     width: 42, height: 42,
                     borderRadius: cfg.style === 'kawaii' ? '50%' : t.r,
@@ -229,8 +229,15 @@ export default function LeaderboardScreen({ cfg, nav }) {
                     border: `1px solid ${t.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 24, flexShrink: 0,
+                    overflow: 'hidden',
                   }}>
-                    {e.emoji}
+                    {/* inline-block necesario para que CSS transform funcione en emoji */}
+                    <span style={{
+                      display: 'inline-block',
+                      animation: DANCES.find(d => d.id === e.dance)?.anim || 'none',
+                    }}>
+                      {e.emoji}
+                    </span>
                   </div>
 
                   {/* Nombre */}

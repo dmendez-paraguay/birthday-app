@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { T, btnStyle } from '../themes.js'
 import { saveShooterScore } from '../game/firebase.js'
 import { LEVELS } from '../game/constants.js'
+import DancePicker from '../components/DancePicker.jsx'
 
 // 20 confetti particles with varied colors
 const CONFETTI_COLORS = [
@@ -53,6 +54,7 @@ export default function AllClearScreen({ score, nav, onReplay }) {
   const t = T.arcade
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('🏆')
+  const [dance, setDance] = useState('spin')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -62,7 +64,7 @@ export default function AllClearScreen({ score, nav, onReplay }) {
     setSaving(true)
     setError('')
     try {
-      await saveShooterScore({ name: name.trim(), emoji, score, level: LEVELS.length })
+      await saveShooterScore({ name: name.trim(), emoji, dance, score, level: LEVELS.length })
       setSaved(true)
     } catch (e) {
       setError('Error al guardar. Intenta de nuevo.')
@@ -239,6 +241,11 @@ export default function AllClearScreen({ score, nav, onReplay }) {
                 boxSizing: 'border-box',
               }}
             />
+
+            {/* Bailecito */}
+            <div style={{ marginBottom: 4 }}>
+              <DancePicker t={t} value={dance} onChange={setDance} previewEmoji={emoji} />
+            </div>
 
             {error && (
               <div style={{

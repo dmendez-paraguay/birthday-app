@@ -3,6 +3,7 @@ import { T, EMOJIS, btnStyle, cardStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import Confetti from '../components/Confetti.jsx'
 import BackButton from '../components/BackButton.jsx'
+import DancePicker from '../components/DancePicker.jsx'
 import { addScore, loadLeaderboard } from '../lib/db.js'
 import { Audio } from '../lib/audio.js'
 
@@ -10,6 +11,7 @@ export default function GameOver({ score, cfg, onReplay, onBack }) {
   const t = T[cfg.style]
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState(EMOJIS[0])
+  const [dance, setDance] = useState('bounce')
   const [saved, setSaved] = useState(false)
   const [isRecord, setIsRecord] = useState(false)
   const [confetti, setConfetti] = useState(false)
@@ -24,6 +26,7 @@ export default function GameOver({ score, cfg, onReplay, onBack }) {
       const entry = {
         name: name.trim(),
         emoji,
+        dance,
         score,
         date: new Date().toLocaleDateString('es'),
       }
@@ -95,6 +98,10 @@ export default function GameOver({ score, cfg, onReplay, onBack }) {
                 }}>{e}</button>
               ))}
             </div>
+
+            {/* Bailecito */}
+            <DancePicker t={t} value={dance} onChange={setDance} previewEmoji={emoji} />
+
             <button
               onClick={saveScore}
               disabled={!name.trim() || loading}
