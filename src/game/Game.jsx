@@ -484,8 +484,10 @@ function Overlay({ children, bg = 'rgba(2,2,20,0.9)' }) {
 }
 
 // ── Pantalla Intro ─────────────────────────────────────────────
-function IntroScreen({ level, onStart, onBack }) {
+function IntroScreen({ level, maxLevels, onSetMaxLevels, onStart, onBack }) {
   const lvl = LEVELS[Math.min(level - 1, LEVELS.length - 1)]
+  const isFirstLevel = level === 1
+
   return (
     <Overlay>
       <div style={{ textAlign: 'center', width: '100%', maxWidth: 300 }}>
@@ -504,6 +506,64 @@ function IntroScreen({ level, onStart, onBack }) {
           fontSize: 8, color: '#ff006e', marginBottom: 20,
           textShadow: '0 0 10px #ff006e',
         }}>{lvl.label}</div>
+
+        {/* Selector de sectores — solo en el nivel 1 */}
+        {isFirstLevel && (
+          <div style={{
+            background: 'rgba(255,215,0,0.06)',
+            border: '1px solid rgba(255,215,0,0.2)',
+            borderRadius: 10, padding: '10px 12px', marginBottom: 16,
+          }}>
+            <div style={{
+              fontFamily: "'Press Start 2P',monospace",
+              fontSize: 7, color: 'rgba(255,215,0,0.7)',
+              marginBottom: 8, letterSpacing: 1,
+            }}>
+              SECTORES A JUGAR
+            </div>
+            {/* Bosses preview row */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 8 }}>
+              {LEVELS.map((l, i) => (
+                <div key={i} style={{
+                  fontSize: 16,
+                  opacity: i < maxLevels ? 1 : 0.2,
+                  filter: i < maxLevels ? 'none' : 'grayscale(1)',
+                  transition: 'all 0.15s',
+                }}>
+                  {l.bossEmoji}
+                </div>
+              ))}
+            </div>
+            {/* Selector 1-5 */}
+            <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+              {[1, 2, 3, 4, 5].map(n => {
+                const active = maxLevels === n
+                return (
+                  <button
+                    key={n}
+                    onClick={() => onSetMaxLevels(n)}
+                    style={{
+                      fontFamily: "'Press Start 2P',monospace",
+                      fontSize: 9,
+                      width: 34, height: 34,
+                      borderRadius: 6,
+                      background: active
+                        ? 'linear-gradient(135deg,#ffd70033,#ff006e22)'
+                        : 'rgba(255,255,255,0.04)',
+                      border: `2px solid ${active ? '#ffd700' : 'rgba(255,255,255,0.15)'}`,
+                      color: active ? '#ffd700' : 'rgba(255,255,255,0.45)',
+                      cursor: 'pointer',
+                      boxShadow: active ? '0 0 10px #ffd70044' : 'none',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {n}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{
           background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.18)',
@@ -562,13 +622,13 @@ function PauseScreen({ onResume, onBack }) {
 }
 
 // ── Pantalla Victoria ──────────────────────────────────────────
-function VictoryScreen({ score, level, onNextLevel, onRetry, onBack, onSave }) {
+function VictoryScreen({ score, level, maxLevels, onNextLevel, onRetry, onBack, onSave }) {
   const [name, setName]     = useState('')
   const [emoji, setEmoji]   = useState('🚀')
   const [dance, setDance]   = useState('bounce')
   const [saved, setSaved]   = useState(false)
   const [ranking, setRanking] = useState([])
-  const hasNextLevel = level < LEVELS.length
+  const hasNextLevel = level < maxLevels
 
   useEffect(() => { loadShooterLeaderboard(5).then(setRanking) }, [])
 
@@ -725,6 +785,7 @@ function DefeatScreen({ score, level, onRetry, onBack }) {
 export default function Game({ cfg, nav, onAllClear }) {
   const [phase, setPhase]       = useState('intro')
   const [level, setLevel]       = useState(1)
+  const [maxLevels, setMaxLevels] = useState(LEVELS.length)
   const [finalScore, setFinalScore] = useState(0)
   const [accScore, setAccScore] = useState(0)
   const muted = false
@@ -744,14 +805,14 @@ export default function Game({ cfg, nav, onAllClear }) {
 
   const handleVictory = useCallback((score) => {
     setFinalScore(score)
-    if (level === LEVELS.length && onAllClear) {
+    if (level === maxLevels && onAllClear) {
       setTimeout(() => {
-        onAllClear(accScore + score)
+        onAllClear(accScore + score, maxLevels)
       }, 1200)
     } else {
       setPhase('victory')
     }
-  }, [level, onAllClear, accScore])
+  }, [level, maxLevels, onAllClear, accScore])
 
   const handleDefeat = useCallback(() => {
     setPhase('defeat')
@@ -791,7 +852,7 @@ export default function Game({ cfg, nav, onAllClear }) {
   const handleNextLevel = () => {
     ShooterAudio.stopPulse()
     setAccScore(prev => prev + finalScore)
-    setLevel(l => Math.min(l + 1, LEVELS.length))
+    setLevel(l => Math.min(l + 1, maxLevels))
     setPhase('intro')
   }
 
@@ -867,11 +928,19 @@ export default function Game({ cfg, nav, onAllClear }) {
         )}
 
         {/* Overlays */}
-        {phase === 'intro'   && <IntroScreen   level={level} onStart={handleStart} onBack={handleBack} />}
+        {phase === 'intro'   && (
+          <IntroScreen
+            level={level}
+            maxLevels={maxLevels}
+            onSetMaxLevels={setMaxLevels}
+            onStart={handleStart}
+            onBack={handleBack}
+          />
+        )}
         {phase === 'paused'  && <PauseScreen   onResume={handleResume} onBack={handleBack} />}
         {phase === 'victory' && (
           <VictoryScreen
-            score={finalScore} level={level}
+            score={finalScore} level={level} maxLevels={maxLevels}
             onNextLevel={handleNextLevel}
             onRetry={handleRetry}
             onBack={handleBack}
