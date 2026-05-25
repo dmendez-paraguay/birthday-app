@@ -8,6 +8,7 @@ import BalloonGame from './screens/BalloonGame.jsx'
 import LeaderboardScreen from './screens/LeaderboardScreen.jsx'
 import RSVPScreen from './screens/RSVPScreen.jsx'
 import AdminScreen from './screens/AdminScreen.jsx'
+import GamesHub from './screens/GamesHub.jsx'
 import Game from './game/Game.jsx'
 
 export default function App() {
@@ -70,6 +71,7 @@ export default function App() {
       <style>{GLOBAL_CSS}</style>
       <div style={{ paddingBottom: showNav ? 90 : 0 }}>
         {screen === 'home'    && <HomeScreen cfg={cfg} nav={nav} />}
+        {screen === 'games'   && <GamesHub cfg={cfg} nav={nav} />}
         {screen === 'game'    && <BalloonGame cfg={cfg} nav={nav} />}
         {screen === 'shooter' && <Game cfg={cfg} nav={nav} />}
         {screen === 'lb'      && <LeaderboardScreen cfg={cfg} nav={nav} />}

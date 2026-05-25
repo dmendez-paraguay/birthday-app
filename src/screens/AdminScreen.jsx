@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { T, btnStyle, cardStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
+import BackButton from '../components/BackButton.jsx'
 import { saveConfig, clearLeaderboard, clearRsvp } from '../lib/db.js'
 import { Audio } from '../lib/audio.js'
 
@@ -95,7 +96,7 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
           />
           {pinErr && <div style={{ color: t.a2, textAlign: 'center', fontFamily: t.fH, fontSize: 'clamp(8px,2vw,10px)' }}>{pinErr}</div>}
           <button onClick={unlock} style={{ ...btnStyle(t), width: '100%' }}>ENTRAR</button>
-          <button onClick={() => nav('home')} style={{ ...btnStyle(t, true), width: '100%' }}>← Volver</button>
+          <BackButton t={t} onClick={() => nav('home')} style={{ width: '100%', justifyContent: 'center' }} />
         </div>
       </div>
     </div>
@@ -108,7 +109,7 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
 
       <div style={{ position: 'relative', zIndex: 10, padding: '20px 20px 110px', maxWidth: 500, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <button onClick={() => nav('home')} style={{ ...btnStyle(t, true), padding: '8px 13px' }}>←</button>
+          <BackButton t={t} onClick={() => nav('home')} />
           <div style={{ fontFamily: t.fH, color: t.a1, fontSize: 'clamp(10px,2.8vw,15px)', flex: 1 }}>🔧 PANEL ADMIN</div>
         </div>
 

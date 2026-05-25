@@ -1,59 +1,42 @@
 /**
  * useGameLoop.js — Hook central del game loop.
  *
- * Patrón de rendering híbrido:
- *  - stateRef.current → estado mutable, actualizado en cada frame (NO React)
- *  - setRenderState() → snapshot mínimo cada 2 frames para actualizar la UI
+ * Rendering híbrido:
+ *  - stateRef.current → estado mutable (NO React), 60fps
+ *  - setRenderState() → snapshot cada 2 frames para UI React
  *
- * Esto permite 60fps sin 60 re-renders completos de React por segundo.
+ * Fix bug teclado: keydown ahora resetea targetX → null para
+ * que el branch de teclado (left/right) tenga prioridad.
  */
 import { useRef, useState, useEffect, useCallback } from 'react'
 import {
   buildInitialState,
-  movePlayer, moveBoss, moveBullets,
+  movePlayer, moveBoss, moveBullets, movePowerUps, moveParticles,
   tickShooting, tickCollisions,
 } from './entities.js'
 import { ShooterAudio } from './audio.js'
 import { GAME_W, GAME_H } from './constants.js'
 
-/**
- * @param {object} opts
- * @param {number}   opts.level      - nivel actual (1-3)
- * @param {boolean}  opts.muted      - sonido muted
- * @param {boolean}  opts.active     - si el juego está corriendo (no paused)
- * @param {function} opts.onVictory  - callback cuando boss muere
- * @param {function} opts.onDefeat   - callback cuando player muere
- * @param {object}   opts.containerRef - ref al div contenedor del juego
- */
 export function useGameLoop({ level, muted, active, onVictory, onDefeat, containerRef }) {
-  // Estado mutable del juego (NO React state)
-  const stateRef = useRef(null)
-  // RAF ID
-  const rafRef = useRef(null)
-  // Input actual
-  const inputRef = useRef({ left: false, right: false, targetX: null })
-  // Callbacks frescos (evita closures viejos)
-  const onVictoryRef = useRef(onVictory)
-  const onDefeatRef  = useRef(onDefeat)
-  const mutedRef     = useRef(muted)
-  const activeRef    = useRef(active)
-  // Dimensiones del contenedor (medidas una sola vez)
-  const dimsRef = useRef({ W: GAME_W, H: GAME_H })
-  // Timestamp del último frame
-  const lastTimeRef = useRef(null)
-  // Contador de frames para throttle de React renders
+  const stateRef      = useRef(null)
+  const rafRef        = useRef(null)
+  const inputRef      = useRef({ left: false, right: false, targetX: null })
+  const onVictoryRef  = useRef(onVictory)
+  const onDefeatRef   = useRef(onDefeat)
+  const mutedRef      = useRef(muted)
+  const activeRef     = useRef(active)
+  const dimsRef       = useRef({ W: GAME_W, H: GAME_H })
+  const lastTimeRef   = useRef(null)
   const frameCountRef = useRef(0)
 
-  // Estado de React — sólo lo que necesita la UI (HP bars, score, posiciones)
   const [renderState, setRenderState] = useState(null)
 
-  // Mantener refs de callbacks actualizados
   useEffect(() => { onVictoryRef.current = onVictory }, [onVictory])
   useEffect(() => { onDefeatRef.current  = onDefeat  }, [onDefeat])
   useEffect(() => { mutedRef.current     = muted     }, [muted])
   useEffect(() => { activeRef.current    = active    }, [active])
 
-  // ── Inicializar / reiniciar estado del juego ─────────────────
+  // ── Inicializar estado ───────────────────────────────────────
   const initGame = useCallback(() => {
     const { W, H } = dimsRef.current
     stateRef.current = buildInitialState(level, W, H)
@@ -62,95 +45,120 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
     setRenderState({ ...stateRef.current })
   }, [level])
 
-  // ── Handler de eventos del juego ──────────────────────────────
+  // ── Manejo de eventos del juego ──────────────────────────────
   function handleEvents(events) {
+    const audio = !mutedRef.current
+
     for (const ev of events) {
       switch (ev) {
         case 'boss-hit':
-          if (!mutedRef.current) ShooterAudio.hit()
+          if (audio) ShooterAudio.hit()
+          break
+        case 'boss-phase-2':
+          if (audio) ShooterAudio.phaseChange(2)
+          break
+        case 'boss-phase-3':
+          if (audio) ShooterAudio.phaseChange(3)
           break
         case 'boss-dead':
-          if (!mutedRef.current) { ShooterAudio.stopPulse(); ShooterAudio.explosion(); ShooterAudio.victory() }
-          setTimeout(() => onVictoryRef.current(stateRef.current?.score ?? 0), 800)
+          if (audio) { ShooterAudio.stopPulse(); ShooterAudio.explosion(); ShooterAudio.victory() }
+          setTimeout(() => onVictoryRef.current(stateRef.current?.score ?? 0), 900)
           break
         case 'player-hit':
-          if (!mutedRef.current) ShooterAudio.playerHit()
+          if (audio) ShooterAudio.playerHit()
+          // Vibración háptica en mobile
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60])
           break
         case 'player-dead':
-          if (!mutedRef.current) { ShooterAudio.stopPulse(); ShooterAudio.defeat() }
-          setTimeout(() => onDefeatRef.current(), 600)
+          if (audio) { ShooterAudio.stopPulse(); ShooterAudio.defeat() }
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200])
+          setTimeout(() => onDefeatRef.current(), 700)
           break
-        default:
+        case 'combo-up': {
+          const mult = stateRef.current?.multiplier ?? 1
+          if (audio) ShooterAudio.comboUp(mult)
           break
+        }
+        case 'shield-block':
+          if (audio) ShooterAudio.shieldBlock()
+          break
+        case 'powerup-shield':
+        case 'powerup-rapidFire':
+        case 'powerup-bomb':
+          if (audio) ShooterAudio.powerUp()
+          if (navigator.vibrate) navigator.vibrate(80)
+          break
+        default: break
       }
     }
   }
 
-  // ── Game loop principal ───────────────────────────────────────
+  // ── Game loop principal ──────────────────────────────────────
   const gameLoop = useCallback((timestamp) => {
     if (!stateRef.current) return
 
-    // Calcular delta time normalizado a 60fps
     if (!lastTimeRef.current) lastTimeRef.current = timestamp
     const elapsed = timestamp - lastTimeRef.current
     lastTimeRef.current = timestamp
-    // Clamp: máximo 3 frames perdidos (para cuando la tab pierde foco)
     const dt = Math.min(elapsed / 16.667, 3)
 
     if (activeRef.current) {
       const { W, H } = dimsRef.current
       let s = stateRef.current
-
-      // 1. Aplicar input al player
       const inp = inputRef.current
+
+      // 1. Input → target del jugador
       let playerTarget = s.player.targetX
       if (inp.targetX !== null) {
-        // Mouse / touch: mover nave al punto tocado
+        // Mouse / touch → seguir posición exacta
         playerTarget = inp.targetX - s.player.w / 2
       } else {
-        // Teclado: mover de forma continua
-        if (inp.left)  playerTarget = Math.max(0, s.player.x - 9999)
-        if (inp.right) playerTarget = Math.min(W - s.player.w, s.player.x + 9999)
+        // Teclado → movimiento continuo hacia el borde
+        if (inp.left)  playerTarget = 0
+        if (inp.right) playerTarget = W - s.player.w
       }
       s = { ...s, player: { ...s.player, targetX: playerTarget } }
 
       // 2. Mover entidades
-      s = { ...s, player: movePlayer(s.player, dt, W) }
-      s = { ...s, boss:   moveBoss(s.boss, dt, W) }
+      s = { ...s, player:  movePlayer(s.player, dt, W) }
+      s = { ...s, boss:    moveBoss(s.boss, dt, W) }
       s = { ...s, bullets: moveBullets(s.bullets, dt, W, H) }
+      s = { ...s, powerUps: movePowerUps(s.powerUps, dt, H) }
 
-      // 3. Disparo automático
+      // 3. Mover partículas (dentro de effects)
+      s = { ...s, effects: moveParticles(s.effects, dt) }
+
+      // 4. Disparos
       const shot = tickShooting(s.player, s.boss, s.bullets, dt)
-      if (!mutedRef.current && shot.bullets.length > s.bullets.length) {
-        // Solo suena si se añadió bala del jugador
-        const newPlayerBullets = shot.bullets.filter(b =>
-          b.type === 'player' && !s.bullets.find(ob => ob.id === b.id)
-        )
-        if (newPlayerBullets.length) ShooterAudio.shoot()
-      }
+      if (shot.shotFired && !mutedRef.current) ShooterAudio.shoot()
       s = { ...s, player: shot.player, boss: shot.boss, bullets: shot.bullets }
 
-      // 4. Colisiones
-      const { state: afterCollisions, events } = tickCollisions(s)
-      s = afterCollisions
+      // 5. Colisiones
+      const { state: afterCol, events } = tickCollisions(s)
+      s = afterCol
 
-      // 5. Incrementar frame counter
+      // 6. Frame counter
       s = { ...s, frame: s.frame + 1 }
       stateRef.current = s
 
-      // 6. Manejar eventos (audio + transiciones de fase)
+      // 7. Eventos → audio, vibración, transiciones
       handleEvents(events)
 
-      // 7. Actualizar React cada 2 frames (~30 "renders" por segundo)
+      // 8. Snapshot React cada 2 frames
       frameCountRef.current++
       if (frameCountRef.current % 2 === 0) {
         setRenderState({
-          player:  s.player,
-          boss:    s.boss,
-          bullets: s.bullets,
-          effects: s.effects,
-          score:   s.score,
-          frame:   s.frame,
+          player:     s.player,
+          boss:       s.boss,
+          bullets:    s.bullets,
+          effects:    s.effects,
+          powerUps:   s.powerUps,
+          score:      s.score,
+          combo:      s.combo,
+          multiplier: s.multiplier,
+          frame:      s.frame,
+          shakeX:     s.shakeX,
+          shakeY:     s.shakeY,
         })
       }
     }
@@ -158,48 +166,59 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
     rafRef.current = requestAnimationFrame(gameLoop)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Setup: medir contenedor, iniciar loop ────────────────────
+  // ── Setup / cleanup ──────────────────────────────────────────
   useEffect(() => {
-    // Medir dimensiones reales del contenedor
     if (containerRef?.current) {
       const rect = containerRef.current.getBoundingClientRect()
-      dimsRef.current = { W: rect.width, H: rect.height }
+      dimsRef.current = { W: rect.width || GAME_W, H: rect.height || GAME_H }
     }
 
     initGame()
     rafRef.current = requestAnimationFrame(gameLoop)
 
-    // ── Input: teclado ──
+    // ── Teclado ──
     const onKeyDown = (e) => {
-      if (e.key === 'ArrowLeft'  || e.key === 'a') inputRef.current.left  = true
-      if (e.key === 'ArrowRight' || e.key === 'd') inputRef.current.right = true
+      if (e.key === 'ArrowLeft'  || e.key === 'a') {
+        inputRef.current.left    = true
+        inputRef.current.targetX = null  // Fix: teclado tiene prioridad sobre mouse
+      }
+      if (e.key === 'ArrowRight' || e.key === 'd') {
+        inputRef.current.right   = true
+        inputRef.current.targetX = null
+      }
     }
     const onKeyUp = (e) => {
-      if (e.key === 'ArrowLeft'  || e.key === 'a') { inputRef.current.left = false;  inputRef.current.targetX = null }
-      if (e.key === 'ArrowRight' || e.key === 'd') { inputRef.current.right = false; inputRef.current.targetX = null }
+      if (e.key === 'ArrowLeft'  || e.key === 'a') inputRef.current.left  = false
+      if (e.key === 'ArrowRight' || e.key === 'd') inputRef.current.right = false
+      // Si ya no hay teclas, el jugador se queda donde está
+      if (!inputRef.current.left && !inputRef.current.right) {
+        if (inputRef.current.targetX === null && stateRef.current) {
+          inputRef.current.targetX = stateRef.current.player.x
+        }
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup',   onKeyUp)
 
-    // ── Input: mouse ──
+    // ── Mouse ──
     const container = containerRef?.current
     const onMouseMove = (e) => {
       if (!container) return
       const rect = container.getBoundingClientRect()
-      inputRef.current.targetX  = e.clientX - rect.left
-      inputRef.current.left     = false
-      inputRef.current.right    = false
+      inputRef.current.targetX = e.clientX - rect.left
+      inputRef.current.left    = false
+      inputRef.current.right   = false
     }
 
-    // ── Input: touch ──
+    // ── Touch ──
     const onTouchMove = (e) => {
       e.preventDefault()
       if (!container) return
-      const rect = container.getBoundingClientRect()
+      const rect  = container.getBoundingClientRect()
       const touch = e.touches[0]
-      inputRef.current.targetX  = touch.clientX - rect.left
-      inputRef.current.left     = false
-      inputRef.current.right    = false
+      inputRef.current.targetX = touch.clientX - rect.left
+      inputRef.current.left    = false
+      inputRef.current.right   = false
     }
 
     if (container) {
@@ -230,7 +249,7 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
         container.removeEventListener('touchmove', onTouchMove)
       }
     }
-  }, [level]) // reiniciar si cambia el nivel // eslint-disable-line react-hooks/exhaustive-deps
+  }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { renderState, initGame }
 }

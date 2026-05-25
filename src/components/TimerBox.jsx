@@ -3,11 +3,15 @@ import { T } from '../themes.js'
 export default function TimerBox({ val, lbl, style: s }) {
   const t = T[s]
   const base = {
-    width: 'clamp(62px,14vw,80px)', height: 'clamp(62px,14vw,80px)',
+    // Tamaños completamente fluidos: min más bajo para soportar pantallas de 320-360px
+    width:  'clamp(52px, 13vw, 80px)',
+    height: 'clamp(52px, 13vw, 80px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: t.fH, fontSize: 'clamp(20px,5vw,34px)',
+    fontFamily: t.fH,
+    fontSize: 'clamp(17px, 4.5vw, 33px)',
     color: t.a1, borderRadius: t.r,
     position: 'relative', overflow: 'hidden',
+    flexShrink: 0,
   }
   const box =
     s === 'arcade'
@@ -17,7 +21,7 @@ export default function TimerBox({ val, lbl, style: s }) {
       : { ...base, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.1)`, backdropFilter: 'blur(10px)', boxShadow: `inset 0 0 0 1px ${t.a1}20` }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
       <div style={box}>
         {s === 'arcade' && (
           <div style={{
@@ -28,7 +32,14 @@ export default function TimerBox({ val, lbl, style: s }) {
         )}
         {val}
       </div>
-      <div style={{ fontFamily: t.fH, color: t.fg2, fontSize: 'clamp(5px,1.4vw,8px)', letterSpacing: '1px' }}>
+      {/* Etiqueta responsive */}
+      <div style={{
+        fontFamily: t.fH,
+        color: t.fg2,
+        fontSize: 'clamp(5px, 1.6vw, 8px)',
+        letterSpacing: '0.5px',
+        whiteSpace: 'nowrap',
+      }}>
         {lbl}
       </div>
     </div>

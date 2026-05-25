@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T, EMOJIS, btnStyle, cardStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import Confetti from '../components/Confetti.jsx'
+import BackButton from '../components/BackButton.jsx'
 import { addScore, loadLeaderboard } from '../lib/db.js'
 import { Audio } from '../lib/audio.js'
 
@@ -112,9 +113,7 @@ export default function GameOver({ score, cfg, onReplay, onBack }) {
           <button onClick={onReplay} style={btnStyle(t)}>
             {cfg.style === 'kawaii' ? '🔄 ¡Otra vez!' : '↺ JUGAR DE NUEVO'}
           </button>
-          <button onClick={onBack} style={btnStyle(t, true)}>
-            {cfg.style === 'kawaii' ? '🏠 Salir' : '← SALIR'}
-          </button>
+          <BackButton t={t} onClick={onBack} label={cfg.style === 'kawaii' ? 'Salir' : 'Salir'} />
         </div>
       </div>
     </div>
