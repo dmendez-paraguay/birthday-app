@@ -30,19 +30,22 @@ function getBossPhaseConfig(phase) {
 // ── Constructores ─────────────────────────────────────────────
 
 export function createPlayer(W, H) {
+  const startX = W / 2 - PLAYER.width / 2
+  const startY = H - PLAYER.height - 24
   return {
-    x: W / 2 - PLAYER.width / 2,
-    y: H - PLAYER.height - 24,
+    x: startX,
+    y: startY,
     w: PLAYER.width,
     h: PLAYER.height,
     health: PLAYER.health,
     maxHealth: PLAYER.health,
     invincible: 0,
     shootCooldown: 0,
-    targetX: W / 2 - PLAYER.width / 2,
+    targetX: startX,
+    targetY: startY,   // ← nuevo: objetivo vertical
     // Power-up activo
-    shield: 0,       // frames restantes de escudo
-    rapidFire: 0,    // frames restantes de disparo rápido
+    shield: 0,
+    rapidFire: 0,
   }
 }
 
@@ -84,8 +87,9 @@ export function createPlayerBullet(player) {
   return {
     id: uid(),
     type: 'player',
+    // La punta de la nave SVG está en el centro horizontal, tope del hitbox
     x: player.x + player.w / 2 - BULLET.player.width / 2,
-    y: player.y - BULLET.player.height,
+    y: player.y,        // desde la punta (top del hitbox = nariz de la nave)
     w: BULLET.player.width,
     h: BULLET.player.height,
     vy: -PLAYER.bulletSpeed,
@@ -155,12 +159,22 @@ export function createBossBullets(boss, pattern, playerX, playerY) {
 
 // ── Movimiento ────────────────────────────────────────────────
 
-export function movePlayer(player, dt, W) {
+export function movePlayer(player, dt, W, H) {
   const speed = PLAYER.speed * dt
-  const diff = player.targetX - player.x
-  const step = Math.sign(diff) * Math.min(Math.abs(diff), speed)
-  const newX = Math.max(0, Math.min(W - player.w, player.x + step))
-  return { ...player, x: newX }
+
+  // Eje X
+  const diffX = player.targetX - player.x
+  const stepX = Math.sign(diffX) * Math.min(Math.abs(diffX), speed)
+  const newX  = Math.max(0, Math.min(W - player.w, player.x + stepX))
+
+  // Eje Y — la nave puede moverse en el 80% inferior de la pantalla
+  const minY  = H * 0.18           // no sube más que ~18% desde arriba
+  const maxY  = H - player.h - 10
+  const diffY = player.targetY - player.y
+  const stepY = Math.sign(diffY) * Math.min(Math.abs(diffY), speed)
+  const newY  = Math.max(minY, Math.min(maxY, player.y + stepY))
+
+  return { ...player, x: newX, y: newY }
 }
 
 export function moveBoss(boss, dt, W) {

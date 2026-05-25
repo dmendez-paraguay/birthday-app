@@ -43,6 +43,7 @@ export const DEFAULT_CFG = {
   eventTime: '18:00 a 21:00 hs',
   eventPlace: 'Globo Show, Luque – Paraguay',
   eventMapUrl: 'https://www.google.com/maps/search/?api=1&query=Globo+Show+Luque+Paraguay',
+  shooterLevels: 5,
 }
 
 export const GLOBAL_CSS = `
