@@ -5,7 +5,7 @@
 import { db } from '../lib/firebase.js'
 import {
   collection, addDoc, getDocs,
-  query, orderBy, limit,
+  query, orderBy, limit, onSnapshot,
 } from 'firebase/firestore'
 
 const COLLECTION = import.meta.env.VITE_SHOOTER_COLLECTION || 'shooter_scores'
@@ -35,4 +35,13 @@ export async function loadShooterLeaderboard(n = 10) {
   } catch {
     return []
   }
+}
+
+/** Suscripción en tiempo real al ranking del Space Blaster */
+export function subscribeShooterLeaderboard(callback, n = 20) {
+  const q = query(COL(), orderBy('score', 'desc'), limit(n))
+  return onSnapshot(q,
+    snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    () => callback([])
+  )
 }
