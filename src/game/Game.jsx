@@ -716,10 +716,11 @@ function DefeatScreen({ score, level, onRetry, onBack }) {
 }
 
 // ── Componente principal ───────────────────────────────────────
-export default function Game({ cfg, nav }) {
+export default function Game({ cfg, nav, onAllClear }) {
   const [phase, setPhase]       = useState('intro')
   const [level, setLevel]       = useState(1)
   const [finalScore, setFinalScore] = useState(0)
+  const [accScore, setAccScore] = useState(0)
   const muted = false
   const containerRef = useRef(null)
   // Dimensiones del contenedor para scaling
@@ -737,8 +738,14 @@ export default function Game({ cfg, nav }) {
 
   const handleVictory = useCallback((score) => {
     setFinalScore(score)
-    setPhase('victory')
-  }, [])
+    if (level === LEVELS.length && onAllClear) {
+      setTimeout(() => {
+        onAllClear(accScore + score)
+      }, 1200)
+    } else {
+      setPhase('victory')
+    }
+  }, [level, onAllClear, accScore])
 
   const handleDefeat = useCallback(() => {
     setPhase('defeat')
@@ -777,6 +784,7 @@ export default function Game({ cfg, nav }) {
 
   const handleNextLevel = () => {
     ShooterAudio.stopPulse()
+    setAccScore(prev => prev + finalScore)
     setLevel(l => Math.min(l + 1, LEVELS.length))
     setPhase('intro')
   }

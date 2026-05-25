@@ -2,7 +2,7 @@ import { T } from '../themes.js'
 
 export default function NavBar({ cfg, nav, screen, muted, toggleMute }) {
   const t = T[cfg.style]
-  const items = [['home','🏠'],['games','🎮'],['lb','🏆'],['rsvp','📋']]
+  const items = [['home','🏠'],['games','🎮'],['lb','🏆'],['photos','📷'],['rsvp','📋']]
 
   return (
     <div style={{
