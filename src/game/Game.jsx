@@ -71,7 +71,75 @@ function SpaceBackground() {
   )
 }
 
-// ── PlayerSprite ───────────────────────────────────────────────
+// ── PlayerSprite — nave SVG ────────────────────────────────────
+function ShipSVG({ w, h, hasShield, hasRapid, isInvincible }) {
+  const body   = hasShield ? '#22eeff' : hasRapid ? '#ffd700' : '#0099ee'
+  const stripe = hasShield ? '#88ffff' : hasRapid ? '#ffee88' : '#44ccff'
+  const wing   = hasShield ? '#005577' : hasRapid ? '#886600' : '#003366'
+  const eng    = hasRapid  ? '#ffcc00' : '#ff7700'
+
+  return (
+    <svg
+      viewBox="0 0 44 52"
+      width={w} height={h}
+      style={{
+        display: 'block', overflow: 'visible',
+        opacity: isInvincible ? undefined : 1,
+        animation: isInvincible ? 'ship-invincible 0.18s ease-in-out infinite' : undefined,
+        filter: hasShield
+          ? `drop-shadow(0 0 7px #00d4ff) drop-shadow(0 0 14px #00d4ff88)`
+          : hasRapid
+          ? `drop-shadow(0 0 7px #ffd700) drop-shadow(0 0 14px #ffd70088)`
+          : `drop-shadow(0 0 4px #0088ff66)`,
+      }}
+    >
+      {/* ── Llama del motor (debajo del casco) ── */}
+      <ellipse cx="22" cy="51" rx="11" ry="5"  fill={eng}    opacity="0.55" />
+      <ellipse cx="22" cy="49" rx="7"  ry="3.5" fill="#ffcc44" />
+      <ellipse cx="15" cy="48" rx="2.8" ry="1.8" fill={eng} opacity="0.8" />
+      <ellipse cx="29" cy="48" rx="2.8" ry="1.8" fill={eng} opacity="0.8" />
+
+      {/* ── Alas ── */}
+      <polygon points="12,32 1,49 15,37"  fill={wing} />
+      <polygon points="32,32 43,49 29,37" fill={wing} />
+      {/* Borde iluminado de las alas */}
+      <line x1="12" y1="32" x2="15" y2="37" stroke={stripe} strokeWidth="1.5" opacity="0.7" />
+      <line x1="32" y1="32" x2="29" y2="37" stroke={stripe} strokeWidth="1.5" opacity="0.7" />
+
+      {/* ── Casco principal ── */}
+      <polygon points="22,2 36,37 8,37" fill={body} />
+      {/* Franja central */}
+      <polygon points="22,2 25,37 19,37" fill={stripe} opacity="0.35" />
+      {/* Bordes del casco */}
+      <line x1="22" y1="2" x2="36" y2="37" stroke={stripe} strokeWidth="0.8" opacity="0.4" />
+      <line x1="22" y1="2" x2="8"  y2="37" stroke={stripe} strokeWidth="0.8" opacity="0.4" />
+
+      {/* ── Cabina ── */}
+      <ellipse cx="22" cy="20" rx="8"   ry="11"   fill="#001e3d" />
+      <ellipse cx="22" cy="18" rx="5.5" ry="8"    fill="#0099cc" opacity="0.3" />
+      <ellipse cx="20" cy="14" rx="2"   ry="3"    fill="#ffffff"  opacity="0.25" />
+
+      {/* ── Motores (cuadros inferiores) ── */}
+      <rect x="10" y="35" width="8" height="4" rx="2" fill="#001e3d" />
+      <rect x="26" y="35" width="8" height="4" rx="2" fill="#001e3d" />
+      <ellipse cx="14" cy="37" rx="3" ry="1.8" fill={eng} opacity="0.9" />
+      <ellipse cx="30" cy="37" rx="3" ry="1.8" fill={eng} opacity="0.9" />
+
+      {/* ── Punta (donde salen las balas) ── */}
+      <circle cx="22" cy="2" r="2.2" fill="#ffffff" opacity="0.9" />
+      <circle cx="22" cy="2" r="1"   fill={stripe} />
+
+      {/* ── Escudo burbuja ── */}
+      {hasShield && (
+        <>
+          <ellipse cx="22" cy="26" rx="25" ry="28" fill="none"    stroke="#00d4ff" strokeWidth="2"   opacity="0.55" />
+          <ellipse cx="22" cy="26" rx="25" ry="28" fill="#00d4ff" stroke="none"                      opacity="0.05" />
+        </>
+      )}
+    </svg>
+  )
+}
+
 function PlayerSprite({ player, scaleX, scaleY }) {
   if (!player) return null
   const x = player.x * scaleX
@@ -82,39 +150,12 @@ function PlayerSprite({ player, scaleX, scaleY }) {
   const hasRapid     = player.rapidFire > 0
   const isInvincible = player.invincible > 0
 
-  let anim = 'ship-thrust 1.2s ease-in-out infinite'
-  if (hasShield)    anim = 'ship-shield 0.8s ease-in-out infinite'
-  else if (hasRapid) anim = 'ship-rapid 0.5s ease-in-out infinite'
-  else if (isInvincible) anim = 'ship-invincible 0.15s ease-in-out infinite'
-
   return (
     <div style={{
       position: 'absolute', left: x, top: y, width: w, height: h,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: Math.max(26, w * 0.85),
-      animation: anim,
       userSelect: 'none', pointerEvents: 'none', zIndex: 10,
     }}>
-      🚀
-      {/* Propulsor */}
-      <div style={{
-        position: 'absolute', bottom: -6, left: '50%',
-        transform: 'translateX(-50%)',
-        width: 14, height: 14,
-        background: 'radial-gradient(circle, #ff9500, #ff4500, transparent)',
-        borderRadius: '50%', filter: 'blur(3px)',
-        animation: 'ship-thrust 0.4s ease-in-out infinite',
-      }} />
-      {/* Burbuja de escudo */}
-      {hasShield && (
-        <div style={{
-          position: 'absolute', inset: -8,
-          borderRadius: '50%',
-          border: '2px solid #00d4ff88',
-          boxShadow: '0 0 14px #00d4ff44',
-          animation: 'ship-shield 0.8s ease-in-out infinite',
-        }} />
-      )}
+      <ShipSVG w={w} h={h} hasShield={hasShield} hasRapid={hasRapid} isInvincible={isInvincible} />
     </div>
   )
 }
@@ -484,15 +525,26 @@ function Overlay({ children, bg = 'rgba(2,2,20,0.9)' }) {
 }
 
 // ── Pantalla Intro ─────────────────────────────────────────────
-function IntroScreen({ level, maxLevels, onSetMaxLevels, onStart, onBack }) {
+function IntroScreen({ level, maxLevels, onStart, onBack }) {
   const lvl = LEVELS[Math.min(level - 1, LEVELS.length - 1)]
-  const isFirstLevel = level === 1
 
   return (
     <Overlay>
       <div style={{ textAlign: 'center', width: '100%', maxWidth: 300 }}>
-        <div style={{ fontSize: 64, marginBottom: 4, lineHeight: 1 }}>🚀</div>
-        <div style={{ fontSize: 52, marginBottom: 14, lineHeight: 1 }}>{lvl.bossEmoji}</div>
+
+        {/* Mini preview de sectores */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
+          {LEVELS.slice(0, maxLevels).map((l, i) => (
+            <div key={i} style={{
+              fontSize: 22,
+              opacity: i === level - 1 ? 1 : 0.35,
+              filter: i === level - 1 ? 'drop-shadow(0 0 6px #ffd700)' : 'none',
+              transition: 'all 0.2s',
+            }}>
+              {l.bossEmoji}
+            </div>
+          ))}
+        </div>
 
         <h1 style={{
           fontFamily: "'Press Start 2P',monospace",
@@ -503,80 +555,22 @@ function IntroScreen({ level, maxLevels, onSetMaxLevels, onStart, onBack }) {
 
         <div style={{
           fontFamily: "'Press Start 2P',monospace",
-          fontSize: 8, color: '#ff006e', marginBottom: 20,
+          fontSize: 8, color: '#ff006e', marginBottom: 16,
           textShadow: '0 0 10px #ff006e',
-        }}>{lvl.label}</div>
-
-        {/* Selector de sectores — solo en el nivel 1 */}
-        {isFirstLevel && (
-          <div style={{
-            background: 'rgba(255,215,0,0.06)',
-            border: '1px solid rgba(255,215,0,0.2)',
-            borderRadius: 10, padding: '10px 12px', marginBottom: 16,
-          }}>
-            <div style={{
-              fontFamily: "'Press Start 2P',monospace",
-              fontSize: 7, color: 'rgba(255,215,0,0.7)',
-              marginBottom: 8, letterSpacing: 1,
-            }}>
-              SECTORES A JUGAR
-            </div>
-            {/* Bosses preview row */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginBottom: 8 }}>
-              {LEVELS.map((l, i) => (
-                <div key={i} style={{
-                  fontSize: 16,
-                  opacity: i < maxLevels ? 1 : 0.2,
-                  filter: i < maxLevels ? 'none' : 'grayscale(1)',
-                  transition: 'all 0.15s',
-                }}>
-                  {l.bossEmoji}
-                </div>
-              ))}
-            </div>
-            {/* Selector 1-5 */}
-            <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-              {[1, 2, 3, 4, 5].map(n => {
-                const active = maxLevels === n
-                return (
-                  <button
-                    key={n}
-                    onClick={() => onSetMaxLevels(n)}
-                    style={{
-                      fontFamily: "'Press Start 2P',monospace",
-                      fontSize: 9,
-                      width: 34, height: 34,
-                      borderRadius: 6,
-                      background: active
-                        ? 'linear-gradient(135deg,#ffd70033,#ff006e22)'
-                        : 'rgba(255,255,255,0.04)',
-                      border: `2px solid ${active ? '#ffd700' : 'rgba(255,255,255,0.15)'}`,
-                      color: active ? '#ffd700' : 'rgba(255,255,255,0.45)',
-                      cursor: 'pointer',
-                      boxShadow: active ? '0 0 10px #ffd70044' : 'none',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {n}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        }}>{lvl.label} {maxLevels > 1 ? `(${level}/${maxLevels})` : ''}</div>
 
         <div style={{
           background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.18)',
-          borderRadius: 10, padding: '12px 14px', marginBottom: 24,
+          borderRadius: 10, padding: '12px 14px', marginBottom: 22,
         }}>
           <p style={{
             fontFamily: "'Share Tech Mono',monospace",
             fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 2, margin: 0,
           }}>
-            🎮 Deslizá / ←→ para moverte<br/>
+            🎮 Deslizá / WASD / ←↑→↓<br/>
             ⚡ Disparo automático<br/>
             🛡️⚡ Recolectá power-ups<br/>
-            💥 Destruí al boss × {level}<br/>
+            💥 Destruí al boss {lvl.bossEmoji}<br/>
             ❤️ Tenés {PLAYER.health} vidas
           </p>
         </div>
@@ -783,9 +777,9 @@ function DefeatScreen({ score, level, onRetry, onBack }) {
 
 // ── Componente principal ───────────────────────────────────────
 export default function Game({ cfg, nav, onAllClear }) {
+  const maxLevels = Math.min(Math.max(cfg.shooterLevels ?? LEVELS.length, 1), LEVELS.length)
   const [phase, setPhase]       = useState('intro')
   const [level, setLevel]       = useState(1)
-  const [maxLevels, setMaxLevels] = useState(LEVELS.length)
   const [finalScore, setFinalScore] = useState(0)
   const [accScore, setAccScore] = useState(0)
   const muted = false
@@ -932,7 +926,6 @@ export default function Game({ cfg, nav, onAllClear }) {
           <IntroScreen
             level={level}
             maxLevels={maxLevels}
-            onSetMaxLevels={setMaxLevels}
             onStart={handleStart}
             onBack={handleBack}
           />

@@ -20,7 +20,7 @@ import { GAME_W, GAME_H } from './constants.js'
 export function useGameLoop({ level, muted, active, onVictory, onDefeat, containerRef }) {
   const stateRef      = useRef(null)
   const rafRef        = useRef(null)
-  const inputRef      = useRef({ left: false, right: false, targetX: null })
+  const inputRef      = useRef({ left: false, right: false, up: false, down: false, targetX: null, targetY: null })
   const onVictoryRef  = useRef(onVictory)
   const onDefeatRef   = useRef(onDefeat)
   const mutedRef      = useRef(muted)
@@ -107,20 +107,33 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
       let s = stateRef.current
       const inp = inputRef.current
 
-      // 1. Input → target del jugador
-      let playerTarget = s.player.targetX
+      // 1. Input → target del jugador (X e Y)
+      const minY = H * 0.18
+      const maxY = H - s.player.h - 10
+
+      let playerTargetX = s.player.targetX
+      let playerTargetY = s.player.targetY
+
       if (inp.targetX !== null) {
-        // Mouse / touch → seguir posición exacta
-        playerTarget = inp.targetX - s.player.w / 2
+        // Mouse / touch → seguir posición exacta (X)
+        playerTargetX = inp.targetX - s.player.w / 2
       } else {
-        // Teclado → movimiento continuo hacia el borde
-        if (inp.left)  playerTarget = 0
-        if (inp.right) playerTarget = W - s.player.w
+        // Teclado → ir al borde correspondiente
+        if (inp.left)  playerTargetX = 0
+        if (inp.right) playerTargetX = W - s.player.w
       }
-      s = { ...s, player: { ...s.player, targetX: playerTarget } }
+      if (inp.targetY !== null) {
+        // Mouse / touch → seguir posición exacta (Y)
+        playerTargetY = inp.targetY - s.player.h / 2
+      } else {
+        if (inp.up)   playerTargetY = minY
+        if (inp.down) playerTargetY = maxY
+      }
+
+      s = { ...s, player: { ...s.player, targetX: playerTargetX, targetY: playerTargetY } }
 
       // 2. Mover entidades
-      s = { ...s, player:  movePlayer(s.player, dt, W) }
+      s = { ...s, player:  movePlayer(s.player, dt, W, H) }
       s = { ...s, boss:    moveBoss(s.boss, dt, W) }
       s = { ...s, bullets: moveBullets(s.bullets, dt, W, H) }
       s = { ...s, powerUps: movePowerUps(s.powerUps, dt, H) }
@@ -178,24 +191,22 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
 
     // ── Teclado ──
     const onKeyDown = (e) => {
-      if (e.key === 'ArrowLeft'  || e.key === 'a') {
-        inputRef.current.left    = true
-        inputRef.current.targetX = null  // Fix: teclado tiene prioridad sobre mouse
-      }
-      if (e.key === 'ArrowRight' || e.key === 'd') {
-        inputRef.current.right   = true
-        inputRef.current.targetX = null
-      }
+      if (e.key === 'ArrowLeft'  || e.key === 'a') { inputRef.current.left  = true;  inputRef.current.targetX = null }
+      if (e.key === 'ArrowRight' || e.key === 'd') { inputRef.current.right = true;  inputRef.current.targetX = null }
+      if (e.key === 'ArrowUp'    || e.key === 'w') { inputRef.current.up    = true;  inputRef.current.targetY = null }
+      if (e.key === 'ArrowDown'  || e.key === 's') { inputRef.current.down  = true;  inputRef.current.targetY = null }
     }
     const onKeyUp = (e) => {
       if (e.key === 'ArrowLeft'  || e.key === 'a') inputRef.current.left  = false
       if (e.key === 'ArrowRight' || e.key === 'd') inputRef.current.right = false
-      // Si ya no hay teclas, el jugador se queda donde está
-      if (!inputRef.current.left && !inputRef.current.right) {
-        if (inputRef.current.targetX === null && stateRef.current) {
-          inputRef.current.targetX = stateRef.current.player.x
-        }
-      }
+      if (e.key === 'ArrowUp'    || e.key === 'w') inputRef.current.up    = false
+      if (e.key === 'ArrowDown'  || e.key === 's') inputRef.current.down  = false
+      // Al soltar, congelar posición actual
+      const inp = inputRef.current
+      if (!inp.left && !inp.right && inp.targetX === null && stateRef.current)
+        inputRef.current.targetX = stateRef.current.player.x
+      if (!inp.up && !inp.down && inp.targetY === null && stateRef.current)
+        inputRef.current.targetY = stateRef.current.player.y
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup',   onKeyUp)
@@ -206,8 +217,9 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
       if (!container) return
       const rect = container.getBoundingClientRect()
       inputRef.current.targetX = e.clientX - rect.left
-      inputRef.current.left    = false
-      inputRef.current.right   = false
+      inputRef.current.targetY = e.clientY - rect.top
+      inputRef.current.left = inputRef.current.right = false
+      inputRef.current.up   = inputRef.current.down  = false
     }
 
     // ── Touch ──
@@ -217,8 +229,9 @@ export function useGameLoop({ level, muted, active, onVictory, onDefeat, contain
       const rect  = container.getBoundingClientRect()
       const touch = e.touches[0]
       inputRef.current.targetX = touch.clientX - rect.left
-      inputRef.current.left    = false
-      inputRef.current.right   = false
+      inputRef.current.targetY = touch.clientY - rect.top
+      inputRef.current.left = inputRef.current.right = false
+      inputRef.current.up   = inputRef.current.down  = false
     }
 
     if (container) {

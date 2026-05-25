@@ -161,6 +161,41 @@ export default function AdminScreen({ cfg, setCfg, nav }) {
             <div><span style={lbl}>NUEVO PIN DE ADMIN</span>
               <input type="password" value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value })} maxLength={8} style={inp} />
             </div>
+
+            {/* Shooter levels */}
+            <div>
+              <span style={lbl}>🚀 SECTORES DEL SPACE BLASTER</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[1, 2, 3, 4, 5].map(n => {
+                  const active = (form.shooterLevels ?? 5) === n
+                  return (
+                    <button
+                      key={n}
+                      onClick={() => setForm({ ...form, shooterLevels: n })}
+                      style={{
+                        flex: 1,
+                        padding: '10px 4px',
+                        fontFamily: t.fH,
+                        fontSize: 'clamp(9px,2.5vw,13px)',
+                        background: active ? `${t.a1}20` : t.card,
+                        border: `2px solid ${active ? t.a1 : t.border}`,
+                        borderRadius: t.r,
+                        color: active ? t.a1 : t.fg2,
+                        cursor: 'pointer',
+                        boxShadow: active ? `0 0 10px ${t.a1}44` : 'none',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {n}
+                    </button>
+                  )
+                })}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 'clamp(9px,2.5vw,11px)', color: t.fg2, fontFamily: t.fB }}>
+                Los jugadores enfrentan {form.shooterLevels ?? 5} boss{(form.shooterLevels ?? 5) > 1 ? 'es' : ''} en secuencia.
+              </div>
+            </div>
+
             <button onClick={saveAll} disabled={saving} style={{ ...btnStyle(t), marginTop: 6, width: '100%', opacity: saving ? 0.65 : 1 }}>
               {saving ? 'GUARDANDO...' : '💾 GUARDAR CAMBIOS'}
             </button>
