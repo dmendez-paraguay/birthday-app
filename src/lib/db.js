@@ -6,7 +6,7 @@ import { db } from './firebase.js'
 import {
   doc, getDoc, setDoc,
   collection, getDocs, addDoc, deleteDoc,
-  query, orderBy, limit, where,
+  query, orderBy, limit, where, onSnapshot,
 } from 'firebase/firestore'
 
 // ── Colecciones ────────────────────────────────────────────────
@@ -65,4 +65,13 @@ export async function addRsvp(entry) {
 export async function clearRsvp() {
   const snap = await getDocs(RSVP_COL())
   await Promise.all(snap.docs.map(d => deleteDoc(d.ref)))
+}
+
+/** Suscripción en tiempo real al leaderboard de Balloon Game */
+export function subscribeLeaderboard(callback) {
+  const q = query(LB_COL(), orderBy('score', 'desc'), limit(20))
+  return onSnapshot(q,
+    snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    () => callback([])
+  )
 }

@@ -10,12 +10,15 @@ import RSVPScreen from './screens/RSVPScreen.jsx'
 import AdminScreen from './screens/AdminScreen.jsx'
 import GamesHub from './screens/GamesHub.jsx'
 import Game from './game/Game.jsx'
+import AllClearScreen from './screens/AllClearScreen.jsx'
+import PhotoGallery from './screens/PhotoGallery.jsx'
 
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG)
   const [screen, setScreen] = useState('home')
   const [muted, setMuted] = useState(false)
   const [ready, setReady] = useState(false)
+  const [allClearScore, setAllClearScore] = useState(0)
 
   useEffect(() => {
     loadConfig(DEFAULT_CFG).then(d => {
@@ -38,6 +41,11 @@ export default function App() {
     setMuted(next)
     Audio.setMuted(next)
     if (!next) { Audio.init(); Audio.startMusic() }
+  }
+
+  const handleAllClear = (score) => {
+    setAllClearScore(score)
+    setScreen('allclear')
   }
 
   const updateCfg = async newCfg => {
@@ -64,7 +72,7 @@ export default function App() {
     </div>
   )
 
-  const showNav = screen !== 'game' && screen !== 'shooter'
+  const showNav = !['game', 'shooter', 'allclear'].includes(screen)
 
   return (
     <>
@@ -73,10 +81,12 @@ export default function App() {
         {screen === 'home'    && <HomeScreen cfg={cfg} nav={nav} />}
         {screen === 'games'   && <GamesHub cfg={cfg} nav={nav} />}
         {screen === 'game'    && <BalloonGame cfg={cfg} nav={nav} />}
-        {screen === 'shooter' && <Game cfg={cfg} nav={nav} />}
+        {screen === 'shooter' && <Game cfg={cfg} nav={nav} onAllClear={handleAllClear} />}
         {screen === 'lb'      && <LeaderboardScreen cfg={cfg} nav={nav} />}
         {screen === 'rsvp'    && <RSVPScreen cfg={cfg} nav={nav} />}
         {screen === 'admin'   && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
+        {screen === 'photos'  && <PhotoGallery cfg={cfg} nav={nav} />}
+        {screen === 'allclear' && <AllClearScreen score={allClearScore} nav={nav} onReplay={() => { setScreen('shooter') }} />}
       </div>
       {showNav && (
         <NavBar
