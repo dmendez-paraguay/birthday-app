@@ -49,6 +49,13 @@ export const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Fredoka+One&family=Nunito:wght@400;700;900&family=Orbitron:wght@700;900&family=Exo+2:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#000;-webkit-tap-highlight-color:transparent;overflow-x:hidden;}
+/* Safe area para iPhone con Dynamic Island / muesca y Android con barra de gestos */
+.safe-top{padding-top:env(safe-area-inset-top);}
+.safe-bottom{padding-bottom:env(safe-area-inset-bottom);}
+/* Evita que el texto se seleccione en interacciones táctiles */
+button,a{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+/* Scroll suave en toda la app */
+html{scroll-behavior:smooth;}
 input:focus{outline:none;}
 @keyframes float-up{from{transform:translateY(0);opacity:1;}to{transform:translateY(-110vh);opacity:0.6;}}
 @keyframes pts-up{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-60px);}}

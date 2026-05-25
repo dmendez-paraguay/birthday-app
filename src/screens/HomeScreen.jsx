@@ -52,36 +52,44 @@ export default function HomeScreen({ cfg, nav }) {
         }}>🎂</div>
 
         {/* Title */}
+        {/* Título: 2 líneas con corte limpio.
+            Press Start 2P es muy ancho → 12px mínimo para no desbordar en 360px */}
         <div style={{ textAlign: 'center' }}>
           {cfg.style === 'fiesta' ? (
             <div style={{
-              fontFamily: t.fH, fontSize: 'clamp(16px,4vw,26px)',
+              fontFamily: t.fH,
+              fontSize: 'clamp(13px,3.8vw,24px)',
               background: `linear-gradient(90deg,${t.a1},${t.a2},${t.a3},${t.a1})`,
               backgroundSize: '300%',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               animation: 'rainbow 4s linear infinite',
-              textAlign: 'center', lineHeight: 1.4,
+              textAlign: 'center', lineHeight: 1.55,
             }}>
-              {time.done
-                ? `¡FELIZ CUMPLE ${cfg.name.toUpperCase()}!`
-                : `¡${cfg.name.toUpperCase()} CUMPLE ${cfg.age} ${ageLabel}!`}
+              {time.done ? (
+                <><div>¡FELIZ CUMPLE</div><div>{cfg.name.toUpperCase()}!</div></>
+              ) : (
+                <><div>¡{cfg.name.toUpperCase()} CUMPLE</div><div>{cfg.age} {ageLabel}!</div></>
+              )}
             </div>
           ) : (
             <div style={{
-              fontFamily: t.fH, fontSize: 'clamp(15px,3.8vw,24px)',
-              color: t.a3, textAlign: 'center', lineHeight: 1.4,
+              fontFamily: t.fH,
+              fontSize: 'clamp(12px,3.2vw,22px)',
+              color: t.a3, textAlign: 'center', lineHeight: 1.55,
               textShadow: cfg.style === 'arcade' ? `0 0 22px ${t.a3}` : undefined,
             }}>
-              {time.done
-                ? `¡FELIZ CUMPLE\n${cfg.name}!`
-                : `¡${cfg.name} CUMPLE\n${cfg.age} ${ageLabel}!`}
+              {time.done ? (
+                <><div>¡FELIZ CUMPLE</div><div>{cfg.name.toUpperCase()}!</div></>
+              ) : (
+                <><div>¡{cfg.name.toUpperCase()} CUMPLE</div><div>{cfg.age} {ageLabel}!</div></>
+              )}
             </div>
           )}
         </div>
 
         {cfg.welcomeMessage && (
           <div style={{
-            color: t.fg, fontSize: 'clamp(15px,4vw,20px)',
+            color: t.fg, fontSize: 'clamp(13px,3.8vw,18px)',
             lineHeight: 1.45, textAlign: 'center',
             maxWidth: 420, opacity: 0.95,
           }}>

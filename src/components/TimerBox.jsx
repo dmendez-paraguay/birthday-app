@@ -36,7 +36,7 @@ export default function TimerBox({ val, lbl, style: s }) {
       <div style={{
         fontFamily: t.fH,
         color: t.fg2,
-        fontSize: 'clamp(5px, 1.6vw, 8px)',
+        fontSize: 'clamp(8px, 2.2vw, 10px)',
         letterSpacing: '0.5px',
         whiteSpace: 'nowrap',
       }}>

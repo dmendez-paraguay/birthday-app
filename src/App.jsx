@@ -77,7 +77,8 @@ export default function App() {
   return (
     <>
       <style>{GLOBAL_CSS}</style>
-      <div style={{ paddingBottom: showNav ? 90 : 0 }}>
+      {/* paddingBottom extra para que la NavBar + safe-area nunca tape el contenido */}
+      <div style={{ paddingBottom: showNav ? 'max(90px, calc(78px + env(safe-area-inset-bottom)))' : 0 }}>
         {screen === 'home'    && <HomeScreen cfg={cfg} nav={nav} />}
         {screen === 'games'   && <GamesHub cfg={cfg} nav={nav} />}
         {screen === 'game'    && <BalloonGame cfg={cfg} nav={nav} />}
