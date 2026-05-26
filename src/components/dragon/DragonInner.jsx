@@ -16,6 +16,61 @@ import * as THREE from 'three'
 import { useDragonAI, DS } from './useDragonAI.js'
 import FireParticles from './FireParticles.jsx'
 
+/* ── Rugido del dragón (Web Audio API) ─────────────── */
+let _dragonAudioCtx = null
+
+function getDragonCtx() {
+  const Ctor = window.AudioContext || window.webkitAudioContext
+  if (!Ctor) return null
+  if (!_dragonAudioCtx || _dragonAudioCtx.state === 'closed') {
+    try { _dragonAudioCtx = new Ctor() } catch (e) { return null }
+  }
+  if (_dragonAudioCtx.state === 'suspended') _dragonAudioCtx.resume().catch(() => {})
+  return _dragonAudioCtx
+}
+
+function dragonRoar() {
+  const ctx = getDragonCtx()
+  if (!ctx) return
+  const now = ctx.currentTime
+  const dur = 1.5
+
+  // Capas: base grave + midrange + overtone
+  const layers = [
+    { freq: 68,  type: 'sawtooth', vol: 0.20, delay: 0    },
+    { freq: 112, type: 'sawtooth', vol: 0.13, delay: 0.02 },
+    { freq: 165, type: 'square',   vol: 0.07, delay: 0.04 },
+    { freq: 240, type: 'sawtooth', vol: 0.04, delay: 0.06 },
+  ]
+
+  layers.forEach(({ freq, type, vol, delay }) => {
+    const osc  = ctx.createOscillator()
+    const gain = ctx.createGain()
+    // Sweep descendente: da sensación de rugido que retumba
+    osc.type = type
+    osc.frequency.setValueAtTime(freq * 2.2, now + delay)
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.55, now + delay + dur)
+    // Vibrato leve
+    const lfo   = ctx.createOscillator()
+    const lfoG  = ctx.createGain()
+    lfo.frequency.value = 6
+    lfoG.gain.value = 4
+    lfo.connect(lfoG)
+    lfoG.connect(osc.frequency)
+    lfo.start(now + delay)
+    lfo.stop(now + delay + dur)
+    // ADSR
+    gain.gain.setValueAtTime(0, now + delay)
+    gain.gain.linearRampToValueAtTime(vol, now + delay + 0.12)
+    gain.gain.setValueAtTime(vol * 0.85, now + delay + 0.5)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start(now + delay)
+    osc.stop(now + delay + dur + 0.05)
+  })
+}
+
 useGLTF.preload('/models/dragoncito.glb')
 
 /* ── Código del vertex shader para articulación falsa ─── */
@@ -76,8 +131,31 @@ function DragonScene({ aiProps }) {
     return [s, c]
   }, [gltfScene])
 
+  // Textura de gradiente radial para el halo (círculo, no cuadrado)
+  const glowTexture = useMemo(() => {
+    const sz  = 128
+    const cv  = document.createElement('canvas')
+    cv.width  = sz
+    cv.height = sz
+    const ctx = cv.getContext('2d')
+    const cx  = sz / 2
+    const g   = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
+    g.addColorStop(0,    'rgba(160, 80, 255, 0.75)')
+    g.addColorStop(0.30, 'rgba(110, 40, 230, 0.45)')
+    g.addColorStop(0.65, 'rgba(80,  20, 180, 0.15)')
+    g.addColorStop(1,    'rgba(50,  10, 140, 0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, sz, sz)
+    return new THREE.CanvasTexture(cv)
+  }, [])
+
   // Referencia a los shaders para actualizar uTime en useFrame
   const shaderRefs = useRef([])
+
+  // Rugido al entrar en estado FIRE
+  useEffect(() => {
+    if (state === DS.FIRE) dragonRoar()
+  }, [state])
 
   // Inyectar el vertex shader de articulación falsa
   useEffect(() => {
@@ -345,9 +423,15 @@ function DragonScene({ aiProps }) {
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
 
-        {/* Halo púrpura detrás del dragón */}
-        <sprite scale={[3.8, 3.8, 1]} position={[0, 0, -0.7]}>
-          <spriteMaterial color="#6d28d9" transparent opacity={0.22} depthWrite={false} sizeAttenuation />
+        {/* Halo con gradiente radial → círculo, no cuadrado */}
+        <sprite scale={[4.5, 4.5, 1]} position={[0, 0.2, -0.8]}>
+          <spriteMaterial
+            map={glowTexture}
+            transparent
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            sizeAttenuation
+          />
         </sprite>
       </group>
 

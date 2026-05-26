@@ -116,7 +116,7 @@ export default function FireParticles({ active, dragonRef }) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]} frustumCulled={false}>
       <sphereGeometry args={[1, 5, 5]} />
-      <meshBasicMaterial vertexColors transparent opacity={0.9} depthWrite={false} />
+      <meshBasicMaterial transparent opacity={0.88} depthWrite={false} />
     </instancedMesh>
   )
 }
