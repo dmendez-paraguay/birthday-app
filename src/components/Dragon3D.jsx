@@ -1,12 +1,8 @@
 /**
- * Dragon3D.jsx — Wrapper lazy-loaded del dragón 3D en HomeScreen.
- * Usa React.lazy para no incluir Three.js en el bundle inicial.
- *
- * Interacciones:
- *   - 1 toque/clic  → pirueta
- *   - 2 toques/clics → escupe fuego
- *   - arrastrar      → mover dragón
- *   - merodeo autónomo + piruetas, wiggles, bounces, fuego aleatorios
+ * Dragon3D.jsx — Wrapper lazy-loaded del dragón 3D.
+ * position:fixed para viewport coordinates exactas.
+ * pointer-events:none en el outer div → los botones de UI siguen recibiendo clics.
+ * pointer-events:auto en el inner div → el canvas 3D recibe clics para el dragón.
  */
 import { Suspense, lazy } from 'react'
 
@@ -14,17 +10,19 @@ const DragonInner = lazy(() => import('./dragon/DragonInner.jsx'))
 
 export default function Dragon3D() {
   return (
-    <div
-      style={{
+    // Outer: fixed al viewport, z-index 6 (bajo el contenido en z-10, sobre BgLayer)
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 6,
+      pointerEvents: 'none',
+    }}>
+      {/* Inner: posicionado absolutamente para que R3F mida el tamaño correctamente */}
+      <div style={{
         position: 'absolute',
         inset: 0,
-        zIndex: 6,       // por encima del fondo, debajo del contenido (z-index 10)
-        pointerEvents: 'none', // el canvas no bloquea clics en botones
-      }}
-    >
-      {/* pointerEvents "auto" en el canvas para que Three.js capture eventos
-          en zonas donde no hay botones de UI */}
-      <div style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}>
+        pointerEvents: 'auto',
+      }}>
         <Suspense fallback={null}>
           <DragonInner />
         </Suspense>
