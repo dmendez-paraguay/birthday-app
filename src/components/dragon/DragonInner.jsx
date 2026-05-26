@@ -1,13 +1,7 @@
 /**
- * DragonInner.jsx — Escena Three.js del dragón autónomo.
- * Cargado lazy por Dragon3D.jsx.
- *
- * Técnicas de "articulación falsa" sin rig:
- *   - Vertex shader injection via material.onBeforeCompile
- *   - Cola: vértices bajos (Y < 35%) oscilan en X a ~3 Hz
- *   - Cabeza: vértices altos (Y > 80%) cabecea en Z a ~2 Hz
- *   - Cuerpo: onda senoidal suave a lo largo del eje Y
- *   - Uniforme uTime actualizado cada frame → movimiento continuo
+ * DragonInner.jsx — Dragón compañero fijo en la esquina inferior-derecha.
+ * Sin ondulación vertex-shader, sin roaming.
+ * Animaciones en el sitio: flotación suave, pirueta, wiggle, bounce, fuego.
  */
 import { useRef, useMemo, useEffect, useCallback } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
@@ -16,88 +10,50 @@ import * as THREE from 'three'
 import { useDragonAI, DS } from './useDragonAI.js'
 import FireParticles from './FireParticles.jsx'
 
-/* ── Rugido del dragón (Web Audio API) ─────────────── */
-let _dragonAudioCtx = null
+useGLTF.preload('/models/dragoncito.glb')
 
+/* ── Rugido (Web Audio API) ─────────────────────────── */
+let _audioCtx = null
 function getDragonCtx() {
   const Ctor = window.AudioContext || window.webkitAudioContext
   if (!Ctor) return null
-  if (!_dragonAudioCtx || _dragonAudioCtx.state === 'closed') {
-    try { _dragonAudioCtx = new Ctor() } catch (e) { return null }
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    try { _audioCtx = new Ctor() } catch (e) { return null }
   }
-  if (_dragonAudioCtx.state === 'suspended') _dragonAudioCtx.resume().catch(() => {})
-  return _dragonAudioCtx
+  if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {})
+  return _audioCtx
 }
-
 function dragonRoar() {
   const ctx = getDragonCtx()
   if (!ctx) return
   const now = ctx.currentTime
   const dur = 1.5
-
-  // Capas: base grave + midrange + overtone
   const layers = [
     { freq: 68,  type: 'sawtooth', vol: 0.20, delay: 0    },
     { freq: 112, type: 'sawtooth', vol: 0.13, delay: 0.02 },
     { freq: 165, type: 'square',   vol: 0.07, delay: 0.04 },
     { freq: 240, type: 'sawtooth', vol: 0.04, delay: 0.06 },
   ]
-
   layers.forEach(({ freq, type, vol, delay }) => {
     const osc  = ctx.createOscillator()
     const gain = ctx.createGain()
-    // Sweep descendente: da sensación de rugido que retumba
     osc.type = type
     osc.frequency.setValueAtTime(freq * 2.2, now + delay)
     osc.frequency.exponentialRampToValueAtTime(freq * 0.55, now + delay + dur)
-    // Vibrato leve
-    const lfo   = ctx.createOscillator()
-    const lfoG  = ctx.createGain()
+    const lfo  = ctx.createOscillator()
+    const lfoG = ctx.createGain()
     lfo.frequency.value = 6
     lfoG.gain.value = 4
-    lfo.connect(lfoG)
-    lfoG.connect(osc.frequency)
-    lfo.start(now + delay)
-    lfo.stop(now + delay + dur)
-    // ADSR
+    lfo.connect(lfoG); lfoG.connect(osc.frequency)
+    lfo.start(now + delay); lfo.stop(now + delay + dur)
     gain.gain.setValueAtTime(0, now + delay)
     gain.gain.linearRampToValueAtTime(vol, now + delay + 0.12)
     gain.gain.setValueAtTime(vol * 0.85, now + delay + 0.5)
     gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start(now + delay)
-    osc.stop(now + delay + dur + 0.05)
+    osc.connect(gain); gain.connect(ctx.destination)
+    osc.start(now + delay); osc.stop(now + delay + dur + 0.05)
   })
 }
-
-useGLTF.preload('/models/dragoncito.glb')
-
-/* ── Código del vertex shader para articulación falsa ─── */
-const VERT_UNIFORMS = `
-  uniform float uTime;
-  uniform float uYMin;
-  uniform float uYRange;
-  uniform float uAnim;
-`
-
-const VERT_DEFORM = /* glsl */`
-  // "Articulación" procedural sin rig
-  if (uYRange > 0.001) {
-    float nY = clamp((position.y - uYMin) / uYRange, 0.0, 1.0);
-
-    // Cola (parte baja): balancea en X a ~2.8 Hz, amplitud máx 16% del alto
-    float tF = max(0.0, (0.35 - nY) / 0.35);
-    transformed.x += sin(uTime * 2.8) * tF * uYRange * 0.16 * uAnim;
-
-    // Onda corporal suave: sin a lo largo de Y
-    transformed.x += sin(uTime * 1.4 + nY * 3.14159) * uYRange * 0.04 * uAnim;
-
-    // Cabeza (parte alta): cabeceo en Z a ~2 Hz
-    float hF = max(0.0, (nY - 0.80) / 0.20);
-    transformed.z += sin(uTime * 2.0 + 1.0) * hF * uYRange * 0.08 * uAnim;
-  }
-`
 
 /* ── Luces ─────────────────────────────────────────── */
 function Lights() {
@@ -106,37 +62,34 @@ function Lights() {
       <ambientLight intensity={1.5} />
       <directionalLight position={[3, 7, 6]}  intensity={2.2} color="#fff0e0" />
       <directionalLight position={[-4, 1, 4]} intensity={0.6} color="#c0d8ff" />
-      {/* Punto naranja fuerte: destaca el dragón del fondo oscuro */}
       <pointLight position={[0, 4, 6]}  intensity={1.5} color="#ff9000" />
       <pointLight position={[0, -2, 3]} intensity={0.4} color="#7c3aed" />
     </>
   )
 }
 
-/* ── Escena dentro del Canvas ─────────────────────── */
+/* ── Escena ────────────────────────────────────────── */
 function DragonScene({ aiProps }) {
-  const { state, targetPos, triggerPirouette, triggerFire, setTarget } = aiProps
+  const { state, triggerPirouette, triggerFire } = aiProps
   const { camera, gl, viewport } = useThree()
 
   const dragonRef = useRef()
   const { scene: gltfScene } = useGLTF('/models/dragoncito.glb')
 
-  // Normalizar: encajar el modelo en 1.9 unidades
   const [modelScale, modelCenter] = useMemo(() => {
     const box = new THREE.Box3().setFromObject(gltfScene)
     const sz  = box.getSize(new THREE.Vector3())
     const mx  = Math.max(sz.x, sz.y, sz.z)
-    const s   = mx > 0 ? 1.9 / mx : 1
+    const s   = mx > 0 ? 1.7 / mx : 1   // algo más pequeño para esquina
     const c   = box.getCenter(new THREE.Vector3())
     return [s, c]
   }, [gltfScene])
 
-  // Textura de gradiente radial para el halo (círculo, no cuadrado)
+  // Textura gradiente radial para el halo
   const glowTexture = useMemo(() => {
-    const sz  = 128
-    const cv  = document.createElement('canvas')
-    cv.width  = sz
-    cv.height = sz
+    const sz = 128
+    const cv = document.createElement('canvas')
+    cv.width = cv.height = sz
     const ctx = cv.getContext('2d')
     const cx  = sz / 2
     const g   = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx)
@@ -149,76 +102,16 @@ function DragonScene({ aiProps }) {
     return new THREE.CanvasTexture(cv)
   }, [])
 
-  // Referencia a los shaders para actualizar uTime en useFrame
-  const shaderRefs = useRef([])
-
-  // Rugido al entrar en estado FIRE
+  // Rugido al entrar en FIRE
   useEffect(() => {
     if (state === DS.FIRE) dragonRoar()
   }, [state])
 
-  // Inyectar el vertex shader de articulación falsa
-  useEffect(() => {
-    if (!gltfScene) return
-    const box = new THREE.Box3().setFromObject(gltfScene)
-    const yMin  = box.min.y
-    const yRange = box.max.y - box.min.y
-
-    const origMaterials = []
-    shaderRefs.current = []
-
-    gltfScene.traverse(child => {
-      if (!child.isMesh) return
-      origMaterials.push({ child, mat: child.material })
-
-      const mat = child.material.clone()
-
-      mat.onBeforeCompile = (shader) => {
-        // Agregar uniforms
-        shader.uniforms.uTime  = { value: 0 }
-        shader.uniforms.uYMin  = { value: yMin }
-        shader.uniforms.uYRange = { value: yRange }
-        shader.uniforms.uAnim  = { value: 1.0 }
-
-        // Declarar uniforms antes de void main()
-        shader.vertexShader = VERT_UNIFORMS + shader.vertexShader
-
-        // Insertar deformación después de begin_vertex
-        shader.vertexShader = shader.vertexShader.replace(
-          '#include <begin_vertex>',
-          `#include <begin_vertex>\n${VERT_DEFORM}`
-        )
-
-        mat.userData.shader = shader
-        shaderRefs.current.push(shader)
-      }
-
-      // needsUpdate para que Three.js recompile el shader
-      mat.needsUpdate = true
-      child.material = mat
-    })
-
-    // Restaurar materiales originales al desmontar
-    return () => {
-      origMaterials.forEach(({ child, mat }) => {
-        child.material = mat
-      })
-      shaderRefs.current = []
-    }
-  }, [gltfScene, modelScale])
-
   // Refs de animación
   const tRef    = useRef(0)
-  const curPos  = useRef({ x: 0, y: -1.5 })
   const pirYRef = useRef(0)
-  const animAmtRef = useRef(1) // controla intensidad de articulación (0=rígido, 1=máximo)
-
-  // Refs de interacción
-  const isDrag   = useRef(false)
-  const dragDist = useRef(0)
-  const prevPtr  = useRef({ x: 0, y: 0 })
   const raycaster = useRef(new THREE.Raycaster())
-  const lastTap  = useRef(0)
+  const lastTap   = useRef(0)
 
   const toNDC = useCallback((cx, cy) => {
     const r = gl.domElement.getBoundingClientRect()
@@ -234,53 +127,16 @@ function DragonScene({ aiProps }) {
     return raycaster.current.intersectObject(dragonRef.current, true).length > 0
   }, [camera, toNDC])
 
-  const ptrToWorld = useCallback((cx, cy) => {
-    const ndc = toNDC(cx, cy)
-    const v   = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera)
-    const dir = v.sub(camera.position).normalize()
-    const t   = -camera.position.z / dir.z
-    return camera.position.clone().addScaledVector(dir, t)
-  }, [camera, toNDC])
-
   useEffect(() => {
     let tapTimer = null
-
     const xy = (e) => ({
-      x: e.clientX ?? e.changedTouches?.[0]?.clientX ?? e.touches?.[0]?.clientX,
-      y: e.clientY ?? e.changedTouches?.[0]?.clientY ?? e.touches?.[0]?.clientY,
+      x: e.clientX ?? e.changedTouches?.[0]?.clientX,
+      y: e.clientY ?? e.changedTouches?.[0]?.clientY,
     })
-
-    const onDown = (e) => {
-      const { x, y } = xy(e)
-      if (x == null) return
-      if (hitsDragon(x, y)) {
-        isDrag.current   = true
-        dragDist.current = 0
-        prevPtr.current  = { x, y }
-      }
-    }
-
-    const onMove = (e) => {
-      if (!isDrag.current) return
-      const { x, y } = xy(e)
-      if (x == null) return
-      dragDist.current += Math.hypot(x - prevPtr.current.x, y - prevPtr.current.y)
-      prevPtr.current   = { x, y }
-      const w = ptrToWorld(x, y)
-      setTarget({ x: w.x, y: w.y })
-      curPos.current.x += (w.x - curPos.current.x) * 0.35
-      curPos.current.y += (w.y - curPos.current.y) * 0.35
-    }
-
-    const onUp = () => { isDrag.current = false }
-
     const onTap = (e) => {
       const { x, y } = xy(e)
       if (x == null) return
-      if (dragDist.current > 14) { dragDist.current = 0; return }
-      dragDist.current = 0
       if (!hitsDragon(x, y)) return
-
       const now = Date.now()
       if (now - lastTap.current < 380) {
         clearTimeout(tapTimer)
@@ -293,100 +149,54 @@ function DragonScene({ aiProps }) {
         }, 400)
       }
     }
+    window.addEventListener('click', onTap)
+    return () => { window.removeEventListener('click', onTap); clearTimeout(tapTimer) }
+  }, [hitsDragon, triggerFire, triggerPirouette])
 
-    window.addEventListener('pointerdown', onDown)
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup',   onUp)
-    window.addEventListener('click',       onTap)
-
-    return () => {
-      window.removeEventListener('pointerdown', onDown)
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup',   onUp)
-      window.removeEventListener('click',       onTap)
-      clearTimeout(tapTimer)
-    }
-  }, [hitsDragon, ptrToWorld, triggerFire, triggerPirouette, setTarget])
-
-  /* ── Loop principal ── */
+  /* ── Loop ── */
   useFrame((_, delta) => {
     if (!dragonRef.current) return
     const g = dragonRef.current
     tRef.current += delta
     const t = tRef.current
 
-    // Actualizar uniforms del shader de articulación
-    shaderRefs.current.forEach(sh => {
-      sh.uniforms.uTime.value  = t
-      sh.uniforms.uAnim.value  = animAmtRef.current
-    })
+    // Posición home: esquina inferior-derecha, sobre la NavBar (~78px ≈ 0.9 world units)
+    const homeX =  viewport.width  / 2 - 1.0
+    const homeY = -viewport.height / 2 + 1.9
 
-    // Bounds dinámicos del viewport real
-    const halfW = viewport.width  / 2
-    const halfH = viewport.height / 2
-    const bx    = Math.max(0.2, halfW - 1.3)
-    const by    = Math.max(0.5, halfH - 1.6)
+    // Respiración suave: sube y baja ligeramente
+    const breathY    = Math.sin(t * 1.3) * 0.07
+    const breathRoll = Math.sin(t * 0.9) * 0.04
 
-    const breathY    = Math.sin(t * 1.3) * 0.08
-    const breathRoll = Math.sin(t * 0.9) * 0.045
+    // Siempre en home (sin movimiento lateral)
+    g.position.x = homeX
+    g.position.y = homeY + breathY
 
-    // Movimiento de posición
-    if (!isDrag.current) {
-      if (state === DS.WANDER) {
-        const spd = Math.min(delta * 1.6, 1)
-        curPos.current.x += (targetPos.x - curPos.current.x) * spd
-        curPos.current.y += (targetPos.y - curPos.current.y) * spd
-      } else if (state === DS.IDLE) {
-        curPos.current.x += Math.sin(t * 0.45 + 1.3) * delta * 0.10
-        curPos.current.y += Math.cos(t * 0.35)        * delta * 0.07
-      }
-    }
-
-    curPos.current.x = Math.max(-bx, Math.min(bx, curPos.current.x))
-    curPos.current.y = Math.max(-by, Math.min(by, curPos.current.y))
-    g.position.x = curPos.current.x
-    g.position.y = curPos.current.y + breathY
-
-    // ── Animaciones de cuerpo entero por estado ──
     switch (state) {
       case DS.IDLE:
-        animAmtRef.current  = 1.0
         g.rotation.z  = breathRoll
-        g.rotation.x  = Math.sin(t * 0.65) * 0.06
+        g.rotation.x  = Math.sin(t * 0.65) * 0.05
         g.rotation.y += (0 - g.rotation.y) * Math.min(delta * 3, 1)
         g.scale.setScalar(1)
         break
 
-      case DS.WANDER: {
-        animAmtRef.current  = 1.2  // más movimiento mientras merodea
-        const dx = targetPos.x - curPos.current.x
-        g.rotation.z  = Math.max(-0.35, Math.min(0.35, -dx * 0.14)) + breathRoll
-        g.rotation.y += (0 - g.rotation.y) * Math.min(delta * 2, 1)
-        g.rotation.x  = Math.sin(t * 0.65) * 0.04
-        g.scale.setScalar(1)
-        break
-      }
-
       case DS.PIROUETTE:
-        animAmtRef.current  = 0.3  // menos articulación durante pirueta (se vería raro)
         pirYRef.current += delta * 7.0
         g.rotation.y    = pirYRef.current
-        g.rotation.z    = breathRoll + Math.sin(t * 8) * 0.10
+        g.rotation.z    = breathRoll + Math.sin(t * 8) * 0.08
         g.rotation.x    = 0
         g.scale.setScalar(1)
         break
 
       case DS.WIGGLE:
-        animAmtRef.current  = 2.0  // exagerar articulación en wiggle
-        g.rotation.z = Math.sin(t * 12) * 0.38 + breathRoll
-        g.rotation.y = Math.sin(t * 7)  * 0.15
+        g.rotation.z = Math.sin(t * 12) * 0.35 + breathRoll
+        g.rotation.y = Math.sin(t * 7)  * 0.12
         g.rotation.x = 0
         g.scale.setScalar(1)
         break
 
       case DS.BOUNCE: {
-        animAmtRef.current  = 1.5
-        const sc = 1 + Math.abs(Math.sin(t * 9)) * 0.30
+        const sc = 1 + Math.abs(Math.sin(t * 9)) * 0.28
         g.scale.setScalar(sc)
         g.rotation.z = breathRoll
         g.rotation.y += (0 - g.rotation.y) * Math.min(delta * 3, 1)
@@ -395,11 +205,10 @@ function DragonScene({ aiProps }) {
       }
 
       case DS.FIRE:
-        animAmtRef.current  = 0.5
-        g.rotation.x  = -0.20 + Math.sin(t * 4.0) * 0.07
-        g.rotation.z  = Math.sin(t * 2.2) * 0.10
+        g.rotation.x  = -0.18 + Math.sin(t * 4) * 0.07
+        g.rotation.z  = Math.sin(t * 2.2) * 0.09
         g.rotation.y += (0 - g.rotation.y) * Math.min(delta * 2, 1)
-        g.scale.setScalar(1 + Math.sin(t * 4) * 0.05)
+        g.scale.setScalar(1 + Math.sin(t * 4) * 0.04)
         break
     }
   })
@@ -407,24 +216,19 @@ function DragonScene({ aiProps }) {
   return (
     <>
       <Lights />
-
       <group ref={dragonRef}>
-        {/* Modelo 3D normalizado */}
-        <group
-          scale={modelScale}
-          position={[-modelCenter.x, -modelCenter.y, -modelCenter.z]}
-        >
+        <group scale={modelScale} position={[-modelCenter.x, -modelCenter.y, -modelCenter.z]}>
           <primitive object={gltfScene} />
         </group>
 
-        {/* Esfera transparente para facilitar el clic (mayor área de hit) */}
+        {/* Esfera invisible para área de clic más generosa */}
         <mesh>
-          <sphereGeometry args={[1.4, 8, 8]} />
+          <sphereGeometry args={[1.2, 8, 8]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
 
-        {/* Halo con gradiente radial → círculo, no cuadrado */}
-        <sprite scale={[4.5, 4.5, 1]} position={[0, 0.2, -0.8]}>
+        {/* Halo gradiente radial */}
+        <sprite scale={[4.0, 4.0, 1]} position={[0, 0.2, -0.8]}>
           <spriteMaterial
             map={glowTexture}
             transparent
@@ -435,24 +239,18 @@ function DragonScene({ aiProps }) {
         </sprite>
       </group>
 
-      {/* Fuego en world-space (FUERA del grupo del dragón) */}
+      {/* Fuego en world-space */}
       <FireParticles active={state === DS.FIRE} dragonRef={dragonRef} />
     </>
   )
 }
 
-/* ── Componente exportado ─────────────────────────── */
 export default function DragonInner() {
   const ai = useDragonAI()
-
   return (
     <Canvas
       camera={{ position: [0, 0, 11], fov: 50 }}
-      gl={{
-        alpha: true,
-        antialias: true,
-        powerPreference: 'low-power',
-      }}
+      gl={{ alpha: true, antialias: true, powerPreference: 'low-power' }}
       dpr={[1, Math.min(window.devicePixelRatio, 1.5)]}
     >
       <DragonScene aiProps={ai} />
