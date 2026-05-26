@@ -28,6 +28,13 @@ function useCountdown(date) {
 export default function HomeScreen({ cfg, nav }) {
   const t = T[cfg.style]
   const time = useCountdown(cfg.date)
+
+  // Hint para que el usuario sepa que puede interactuar con el dragón
+  const [dragonHint, setDragonHint] = useState(true)
+  useEffect(() => {
+    const id = setTimeout(() => setDragonHint(false), 7000)
+    return () => clearTimeout(id)
+  }, [])
   const p = n => String(n).padStart(2, '0')
   const ageLabel = Number(cfg.age) === 1 ? 'AÑO' : 'AÑOS'
   const hasEventInfo = Boolean(cfg.eventTime || cfg.eventPlace || cfg.eventMapUrl)
@@ -193,6 +200,29 @@ export default function HomeScreen({ cfg, nav }) {
           }}>{e}</div>
         ))}
       </div>
+
+      {/* Hint de interacción (desaparece a los 7s) */}
+      {dragonHint && (
+        <div style={{
+          position: 'fixed',
+          bottom: 110, right: 16,
+          zIndex: 25,
+          background: 'rgba(15,10,40,0.82)',
+          backdropFilter: 'blur(6px)',
+          color: '#e0d0ff',
+          fontSize: 11,
+          fontFamily: "'Share Tech Mono',monospace",
+          padding: '7px 14px',
+          borderRadius: 20,
+          border: '1px solid rgba(109,40,217,0.5)',
+          boxShadow: '0 0 14px rgba(109,40,217,0.35)',
+          pointerEvents: 'none',
+          animation: 'pulse 2s ease-in-out infinite',
+          letterSpacing: 0.5,
+        }}>
+          🐉 Toca · doble toca · arrastra
+        </div>
+      )}
     </div>
   )
 }

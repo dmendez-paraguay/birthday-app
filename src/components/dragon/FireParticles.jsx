@@ -1,6 +1,7 @@
 /**
- * FireParticles.jsx — Sistema de partículas de fuego usando InstancedMesh.
- * ~60 esferas que imitan llamas emanando de la boca del dragón.
+ * FireParticles.jsx — InstancedMesh de 60 partículas de fuego.
+ * IMPORTANTE: debe renderizarse en el nivel de la escena (fuera del grupo del dragón)
+ * para que las posiciones sean en world-space y no en local-space.
  */
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
@@ -8,8 +9,8 @@ import * as THREE from 'three'
 
 const COUNT = 60
 
-const FIRE_PALETTE = [
-  new THREE.Color('#fff176'), // amarillo claro
+const PALETTE = [
+  new THREE.Color('#fff9c4'), // amarillo pálido
   new THREE.Color('#ffd700'), // dorado
   new THREE.Color('#ff8c00'), // naranja
   new THREE.Color('#ff4500'), // rojo-naranja
@@ -18,10 +19,7 @@ const FIRE_PALETTE = [
 
 export default function FireParticles({ active, dragonRef }) {
   const meshRef = useRef()
-  const emitAccRef = useRef(0)
-  const tRef = useRef(0)
-
-  // Pool de partículas
+  const emitAcc = useRef(0)
   const pool = useMemo(() => Array.from({ length: COUNT }, () => ({
     pos: new THREE.Vector3(),
     vel: new THREE.Vector3(),
@@ -29,50 +27,50 @@ export default function FireParticles({ active, dragonRef }) {
     maxLife: 1,
     alive: false,
   })), [])
+  const dummy   = useMemo(() => new THREE.Object3D(), [])
+  const colBuf  = useMemo(() => new THREE.Color(), [])
+  const mouthV  = useMemo(() => new THREE.Vector3(), [])
 
-  const dummy = useMemo(() => new THREE.Object3D(), [])
-  const colorBuf = useMemo(() => new THREE.Color(), [])
-
-  /** Obtiene posición de la boca del dragón en world-space */
-  const getMouthWorld = () => {
-    if (!dragonRef?.current) return new THREE.Vector3(0, 1, 1)
-    const local = new THREE.Vector3(0, 0.85, 0.9)
-    return dragonRef.current.localToWorld(local)
+  /** Posición boca del dragón en world-space */
+  const getMouth = () => {
+    if (!dragonRef?.current) return new THREE.Vector3(0, 1, 0.8)
+    // Asegura que la matriz esté actualizada antes de transformar
+    dragonRef.current.updateWorldMatrix(true, false)
+    mouthV.set(0, 0.9, 0.8)
+    return dragonRef.current.localToWorld(mouthV.clone())
   }
 
   useFrame((_, delta) => {
     if (!meshRef.current) return
-    tRef.current += delta
 
-    // Emitir nuevas partículas si activo
+    // Emitir partículas cuando activo
     if (active) {
-      emitAccRef.current += delta * 35
-      while (emitAccRef.current >= 1) {
-        emitAccRef.current -= 1
-        const dead = pool.find(p => !p.alive)
-        if (dead) {
-          const mouth = getMouthWorld()
-          dead.alive = true
-          dead.maxLife = 0.35 + Math.random() * 0.45
-          dead.life = dead.maxLife
-          dead.pos.copy(mouth).add(new THREE.Vector3(
-            (Math.random() - 0.5) * 0.18,
-            (Math.random() - 0.5) * 0.12,
-            (Math.random() - 0.5) * 0.1,
+      emitAcc.current += delta * 38
+      while (emitAcc.current >= 1) {
+        emitAcc.current -= 1
+        const p = pool.find(p => !p.alive)
+        if (p) {
+          const mouth = getMouth()
+          p.alive   = true
+          p.maxLife = 0.35 + Math.random() * 0.45
+          p.life    = p.maxLife
+          p.pos.copy(mouth).add(new THREE.Vector3(
+            (Math.random() - 0.5) * 0.2,
+            (Math.random() - 0.5) * 0.15,
+            0,
           ))
-          // Velocidad: hacia arriba y ligeramente hacia los lados
-          dead.vel.set(
-            (Math.random() - 0.5) * 2.0,
-            1.5 + Math.random() * 2.5,
-            (Math.random() - 0.5) * 0.8,
+          p.vel.set(
+            (Math.random() - 0.5) * 1.8,
+            1.8 + Math.random() * 2.8,
+            (Math.random() - 0.5) * 0.6,
           )
         }
       }
     } else {
-      emitAccRef.current = 0
+      emitAcc.current = 0
     }
 
-    // Actualizar partículas
+    // Actualizar pool
     pool.forEach((p, i) => {
       if (!p.alive) {
         dummy.position.set(0, -9999, 0)
@@ -92,35 +90,33 @@ export default function FireParticles({ active, dragonRef }) {
         return
       }
 
-      // Física simple: gravedad reducida (el fuego sube)
-      p.vel.y -= delta * 0.4
+      // Física: sube y se dispersa
+      p.vel.y -= delta * 0.5  // muy poca gravedad (llamas van hacia arriba)
       p.pos.addScaledVector(p.vel, delta)
 
-      const ratio = p.life / p.maxLife  // 1=recién nacida, 0=muriendo
-      const scale = 0.10 * ratio * (0.7 + Math.random() * 0.6)
+      const ratio = p.life / p.maxLife         // 1=nueva, 0=muerta
+      const sc    = 0.09 * ratio * (0.6 + Math.random() * 0.8)
 
       dummy.position.copy(p.pos)
-      dummy.scale.setScalar(scale)
+      dummy.scale.setScalar(sc)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Color: amarillo→naranja→rojo según vejez
-      const ci = Math.min(Math.floor((1 - ratio) * (FIRE_PALETTE.length - 1)), FIRE_PALETTE.length - 2)
-      const frac = ((1 - ratio) * (FIRE_PALETTE.length - 1)) % 1
-      colorBuf.lerpColors(FIRE_PALETTE[ci], FIRE_PALETTE[ci + 1], frac)
-      meshRef.current.setColorAt(i, colorBuf)
+      // Gradiente de color: amarillo → rojo
+      const ci   = Math.min(Math.floor((1 - ratio) * (PALETTE.length - 1)), PALETTE.length - 2)
+      const frac = ((1 - ratio) * (PALETTE.length - 1)) % 1
+      colBuf.lerpColors(PALETTE[ci], PALETTE[ci + 1], frac)
+      meshRef.current.setColorAt(i, colBuf)
     })
 
     meshRef.current.instanceMatrix.needsUpdate = true
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true
-    }
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true
   })
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]} frustumCulled={false}>
       <sphereGeometry args={[1, 5, 5]} />
-      <meshBasicMaterial vertexColors transparent opacity={0.92} depthWrite={false} />
+      <meshBasicMaterial vertexColors transparent opacity={0.9} depthWrite={false} />
     </instancedMesh>
   )
 }
