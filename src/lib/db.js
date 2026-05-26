@@ -17,9 +17,18 @@ const RSVP_COL  = () => collection(db, 'rsvp')
 // ── Config ─────────────────────────────────────────────────────
 export async function loadConfig(defaults) {
   try {
+    console.log('[DB] Intentando leer config/app desde Firestore...')
     const snap = await getDoc(CFG_REF())
-    return snap.exists() ? { ...defaults, ...snap.data() } : defaults
-  } catch {
+    if (snap.exists()) {
+      console.log('[DB] ✅ Config cargada desde Firestore:', Object.keys(snap.data()))
+      return { ...defaults, ...snap.data() }
+    } else {
+      console.warn('[DB] ⚠️ Documento config/app no existe en Firestore — usando defaults.\n' +
+        'Solución: entrá al panel Admin (⚙️) y guardá la configuración al menos una vez.')
+      return defaults
+    }
+  } catch (err) {
+    console.error('[DB] ❌ Error al conectar con Firestore:', err.code ?? err.message, err)
     return defaults
   }
 }
