@@ -29,12 +29,13 @@ export default function HomeScreen({ cfg, nav }) {
   const t = T[cfg.style]
   const time = useCountdown(cfg.date)
 
-  // Hint para que el usuario sepa que puede interactuar con el dragón
+  // Hint de interacción (desaparece a los 6s)
   const [dragonHint, setDragonHint] = useState(true)
   useEffect(() => {
-    const id = setTimeout(() => setDragonHint(false), 7000)
+    const id = setTimeout(() => setDragonHint(false), 6000)
     return () => clearTimeout(id)
   }, [])
+
   const p = n => String(n).padStart(2, '0')
   const ageLabel = Number(cfg.age) === 1 ? 'AÑO' : 'AÑOS'
   const hasEventInfo = Boolean(cfg.eventTime || cfg.eventPlace || cfg.eventMapUrl)
@@ -47,19 +48,37 @@ export default function HomeScreen({ cfg, nav }) {
       fontFamily: t.fB,
     }}>
       <BgLayer style={cfg.style} />
-      {/* Dragón 3D autónomo — canvas transparente con z-index 6 */}
-      <Dragon3D />
       <div style={{
         position: 'relative', zIndex: 10,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         padding: '36px 20px 110px', gap: 22, width: '100%', maxWidth: 480,
       }}>
-        {/* Hero */}
-        <div style={{
-          fontSize: 'clamp(64px,16vw,88px)',
-          animation: 'hero-bounce 2.2s ease-in-out infinite',
-          filter: `drop-shadow(0 10px 28px ${t.a1}55)`,
-        }}>🎂</div>
+        {/* Hero: dragón 3D inline en lugar de la torta */}
+        <div style={{ position: 'relative' }}>
+          <Dragon3D size={210} />
+          {/* Hint de interacción debajo del dragón */}
+          {dragonHint && (
+            <div style={{
+              position: 'absolute',
+              bottom: -6,
+              left: '50%', transform: 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+              background: 'rgba(15,10,40,0.78)',
+              backdropFilter: 'blur(6px)',
+              color: '#e0d0ff',
+              fontSize: 10,
+              fontFamily: "'Share Tech Mono',monospace",
+              padding: '5px 12px',
+              borderRadius: 20,
+              border: '1px solid rgba(109,40,217,0.45)',
+              pointerEvents: 'none',
+              animation: 'pulse 2s ease-in-out infinite',
+              letterSpacing: 0.5,
+            }}>
+              🐉 Toca · doble toca
+            </div>
+          )}
+        </div>
 
         {/* Title */}
         {/* Título: 2 líneas con corte limpio.
@@ -200,29 +219,6 @@ export default function HomeScreen({ cfg, nav }) {
           }}>{e}</div>
         ))}
       </div>
-
-      {/* Hint de interacción (desaparece a los 7s) */}
-      {dragonHint && (
-        <div style={{
-          position: 'fixed',
-          bottom: 110, right: 16,
-          zIndex: 25,
-          background: 'rgba(15,10,40,0.82)',
-          backdropFilter: 'blur(6px)',
-          color: '#e0d0ff',
-          fontSize: 11,
-          fontFamily: "'Share Tech Mono',monospace",
-          padding: '7px 14px',
-          borderRadius: 20,
-          border: '1px solid rgba(109,40,217,0.5)',
-          boxShadow: '0 0 14px rgba(109,40,217,0.35)',
-          pointerEvents: 'none',
-          animation: 'pulse 2s ease-in-out infinite',
-          letterSpacing: 0.5,
-        }}>
-          🐉 Toca · doble toca · arrastra
-        </div>
-      )}
     </div>
   )
 }
