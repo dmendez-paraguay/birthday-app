@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { DEFAULT_CFG, GLOBAL_CSS } from './themes.js'
-import { loadConfig, saveConfig } from './lib/db.js'
+import { loadConfig, saveConfig, dbStatus } from './lib/db.js'
 import { Audio } from './lib/audio.js'
 import NavBar from './components/NavBar.jsx'
 import HomeScreen from './screens/HomeScreen.jsx'
@@ -20,11 +20,14 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [allClearScore, setAllClearScore] = useState(0)
   const [allClearLevels, setAllClearLevels] = useState(5)
+  const [dbError, setDbError] = useState(null)   // null | 'no-document' | error code
 
   useEffect(() => {
     loadConfig(DEFAULT_CFG).then(d => {
       setCfg(d)
       setReady(true)
+      // Mostrar banner de diagnóstico si no conectó
+      if (!dbStatus.ok) setDbError(dbStatus.error)
       if (d.musicOn) {
         setTimeout(() => { Audio.init(); Audio.startMusic() }, 800)
       }
@@ -79,6 +82,29 @@ export default function App() {
   return (
     <>
       <style>{GLOBAL_CSS}</style>
+
+      {/* Banner de diagnóstico Firebase — solo visible cuando hay error */}
+      {dbError && screen === 'home' && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: dbError === 'no-document' ? '#7c3a00' : '#3a0000',
+          color: '#fff',
+          fontFamily: "'Share Tech Mono', monospace",
+          fontSize: 11, lineHeight: 1.5,
+          padding: '10px 16px',
+          borderBottom: '2px solid ' + (dbError === 'no-document' ? '#ff9500' : '#ff3b3b'),
+        }}>
+          {dbError === 'no-document'
+            ? '⚠️ Firebase conectado pero config/app no existe → abrí ⚙️ Admin y guardá la configuración'
+            : `❌ Firebase sin conexión — error: ${dbError} → revisá las variables de entorno en Vercel`
+          }
+          <span
+            onClick={() => setDbError(null)}
+            style={{ float: 'right', cursor: 'pointer', opacity: 0.7 }}
+          >✕</span>
+        </div>
+      )}
+
       {/* paddingBottom extra para que la NavBar + safe-area nunca tape el contenido */}
       <div style={{ paddingBottom: showNav ? 'max(90px, calc(78px + env(safe-area-inset-bottom)))' : 0 }}>
         {screen === 'home'    && <HomeScreen cfg={cfg} nav={nav} />}
