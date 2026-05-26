@@ -74,13 +74,17 @@ export function useDragonAI() {
   }, [go, schedule])
 
   useEffect(() => {
-    // Inicio ligeramente retrasado para que la app cargue primero
-    const init = setTimeout(scheduleNext, 1500)
+    // Sin delay: empieza a merodear inmediatamente cuando el modelo carga
+    go(DS.WANDER, rndPos())
+    const init = setTimeout(() => {
+      go(DS.IDLE)
+      scheduleNext()
+    }, 2500)
     return () => {
       clearTimeout(init)
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [scheduleNext])
+  }, [scheduleNext, go])
 
   /** Activado por clic del usuario */
   const triggerPirouette = useCallback(() => {
