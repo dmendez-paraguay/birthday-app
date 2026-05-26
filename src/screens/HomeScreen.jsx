@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { T, btnStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import TimerBox from '../components/TimerBox.jsx'
+import Dragon3D from '../components/Dragon3D.jsx'
 
 function useCountdown(date) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, done: false })
@@ -39,6 +40,8 @@ export default function HomeScreen({ cfg, nav }) {
       fontFamily: t.fB,
     }}>
       <BgLayer style={cfg.style} />
+      {/* Dragón 3D autónomo — canvas transparente con z-index 6 */}
+      <Dragon3D />
       <div style={{
         position: 'relative', zIndex: 10,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
