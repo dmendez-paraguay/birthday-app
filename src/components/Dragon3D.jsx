@@ -1,32 +1,24 @@
 /**
- * Dragon3D.jsx — Wrapper lazy-loaded del dragón 3D.
- * position:fixed para viewport coordinates exactas.
- * pointer-events:none en el outer div → los botones de UI siguen recibiendo clics.
- * pointer-events:auto en el inner div → el canvas 3D recibe clics para el dragón.
+ * Dragon3D.jsx — Hero inline del dragón 3D.
+ * Import eager (no lazy) → el chunk JS arranca junto con la app.
+ * Suspense con fallback 🐉 visible mientras carga el GLB.
  */
-import { Suspense, lazy } from 'react'
+import { Suspense } from 'react'
+import DragonInner from './dragon/DragonInner.jsx'
 
-const DragonInner = lazy(() => import('./dragon/DragonInner.jsx'))
-
-export default function Dragon3D() {
+export default function Dragon3D({ size = 210 }) {
   return (
-    // Outer: fixed al viewport, z-index 6 (bajo el contenido en z-10, sobre BgLayer)
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 6,
-      pointerEvents: 'none',
-    }}>
-      {/* Inner: posicionado absolutamente para que R3F mida el tamaño correctamente */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'auto',
-      }}>
-        <Suspense fallback={null}>
-          <DragonInner />
-        </Suspense>
-      </div>
+    <div style={{ width: size, height: size, flexShrink: 0 }}>
+      <Suspense fallback={
+        <div style={{
+          width: size, height: size,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: Math.round(size * 0.42),
+          animation: 'hero-bounce 2.2s ease-in-out infinite',
+        }}>🐉</div>
+      }>
+        <DragonInner />
+      </Suspense>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 /**
- * DragonInner.jsx — Dragón compañero fijo en la esquina inferior-derecha.
+ * DragonInner.jsx — Dragón hero centrado en su propio canvas inline.
  * Sin ondulación vertex-shader, sin roaming.
  * Animaciones en el sitio: flotación suave, pirueta, wiggle, bounce, fuego.
  */
@@ -71,7 +71,7 @@ function Lights() {
 /* ── Escena ────────────────────────────────────────── */
 function DragonScene({ aiProps }) {
   const { state, triggerPirouette, triggerFire } = aiProps
-  const { camera, gl, viewport } = useThree()
+  const { camera, gl } = useThree()
 
   const dragonRef = useRef()
   const { scene: gltfScene } = useGLTF('/models/dragoncito.glb')
@@ -80,7 +80,7 @@ function DragonScene({ aiProps }) {
     const box = new THREE.Box3().setFromObject(gltfScene)
     const sz  = box.getSize(new THREE.Vector3())
     const mx  = Math.max(sz.x, sz.y, sz.z)
-    const s   = mx > 0 ? 1.7 / mx : 1   // algo más pequeño para esquina
+    const s   = mx > 0 ? 2.8 / mx : 1   // más grande para hero central
     const c   = box.getCenter(new THREE.Vector3())
     return [s, c]
   }, [gltfScene])
@@ -160,17 +160,13 @@ function DragonScene({ aiProps }) {
     tRef.current += delta
     const t = tRef.current
 
-    // Posición home: esquina inferior-derecha, sobre la NavBar (~78px ≈ 0.9 world units)
-    const homeX =  viewport.width  / 2 - 1.0
-    const homeY = -viewport.height / 2 + 1.9
-
-    // Respiración suave: sube y baja ligeramente
-    const breathY    = Math.sin(t * 1.3) * 0.07
+    // Respiración suave: sube y baja ligeramente (centrado en el canvas)
+    const breathY    = Math.sin(t * 1.3) * 0.12
     const breathRoll = Math.sin(t * 0.9) * 0.04
 
-    // Siempre en home (sin movimiento lateral)
-    g.position.x = homeX
-    g.position.y = homeY + breathY
+    // Centrado en el canvas
+    g.position.x = 0
+    g.position.y = breathY
 
     switch (state) {
       case DS.IDLE:
@@ -223,12 +219,12 @@ function DragonScene({ aiProps }) {
 
         {/* Esfera invisible para área de clic más generosa */}
         <mesh>
-          <sphereGeometry args={[1.2, 8, 8]} />
+          <sphereGeometry args={[1.6, 8, 8]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
 
         {/* Halo gradiente radial */}
-        <sprite scale={[4.0, 4.0, 1]} position={[0, 0.2, -0.8]}>
+        <sprite scale={[5.5, 5.5, 1]} position={[0, 0.2, -0.8]}>
           <spriteMaterial
             map={glowTexture}
             transparent
@@ -249,7 +245,7 @@ export default function DragonInner() {
   const ai = useDragonAI()
   return (
     <Canvas
-      camera={{ position: [0, 0, 11], fov: 50 }}
+      camera={{ position: [0, 0, 6], fov: 50 }}
       gl={{ alpha: true, antialias: true, powerPreference: 'low-power' }}
       dpr={[1, Math.min(window.devicePixelRatio, 1.5)]}
     >
