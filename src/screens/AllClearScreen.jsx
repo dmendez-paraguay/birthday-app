@@ -174,7 +174,7 @@ export default function AllClearScreen({ score, maxLevels = 5, name = '', nav, o
             lineHeight: 1.6,
             marginBottom: 10,
           }}>
-            ¡FELIZ CUMPLE<br />{birthdayName.toUpperCase() || 'CAMPEÓN'}!
+            ¡FELIZ CUMPLE<br />{name.toUpperCase() || 'CAMPEÓN'}!
           </h1>
           <p style={{
             fontFamily: t.fB,
