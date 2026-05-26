@@ -66,6 +66,7 @@ export function createBoss(level, W) {
     shootCooldown: lvl.bossShootInterval,
     dir: 1,
     emoji: lvl.bossEmoji,
+    villainName: lvl.villainName,
     // Fases
     phase: 1,
     // Power-up drops

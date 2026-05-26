@@ -219,4 +219,42 @@ export const ShooterAudio = {
     if (bassTimeout) { clearTimeout(bassTimeout); bassTimeout = null }
     if (arpeTimeout) { clearTimeout(arpeTimeout); arpeTimeout = null }  // FIX
   },
+
+  /** Feliz Cumpleaños — versión chip-tune 8-bit */
+  happyBirthday() {
+    try {
+      const c = getCtx()
+      const t = c.currentTime + 0.05
+      const beat = 60 / 112   // BPM 112
+
+      // [freq_hz, beats] — null = silencio
+      const score = [
+        [392, 0.5], [392, 0.5],
+        [440, 1],   [392, 1],   [523, 1],   [494, 2],   [null, 0.5],
+        [392, 0.5], [392, 0.5],
+        [440, 1],   [392, 1],   [587, 1],   [523, 2],   [null, 0.5],
+        [392, 0.5], [392, 0.5],
+        [784, 1],   [659, 1],   [523, 1],   [494, 1],   [440, 2],   [null, 0.5],
+        [698, 0.5], [698, 0.5],
+        [659, 1],   [523, 1],   [587, 1],   [523, 2],
+      ]
+
+      let now = t
+      score.forEach(([freq, beats]) => {
+        const dur = beats * beat
+        if (freq) {
+          const g = gain(0.14)
+          g.gain.setValueAtTime(0.14, now)
+          g.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.82)
+          osc('square', freq, now, now + dur * 0.82, g)
+          // harmonic octave below for fullness
+          const g2 = gain(0.05)
+          g2.gain.setValueAtTime(0.05, now)
+          g2.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.82)
+          osc('triangle', freq / 2, now, now + dur * 0.82, g2)
+        }
+        now += dur
+      })
+    } catch {}
+  },
 }

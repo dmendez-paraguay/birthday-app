@@ -1,10 +1,11 @@
 /**
- * AllClearScreen.jsx — Pantalla final cuando el jugador vence todos los 5 sectores.
+ * AllClearScreen.jsx — Pantalla final cuando el jugador vence todos los sectores.
  */
 import { useState, useEffect } from 'react'
 import { T, btnStyle } from '../themes.js'
 import { saveShooterScore } from '../game/firebase.js'
 import { LEVELS } from '../game/constants.js'
+import { ShooterAudio } from '../game/audio.js'
 import DancePicker from '../components/DancePicker.jsx'
 
 // 20 confetti particles with varied colors
@@ -50,21 +51,27 @@ function AnimatedScore({ target }) {
   )
 }
 
-export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) {
+export default function AllClearScreen({ score, maxLevels = 5, name = '', nav, onReplay }) {
   const t = T.arcade
-  const [name, setName] = useState('')
+  const [playerName, setPlayerName] = useState('')
   const [emoji, setEmoji] = useState('🏆')
   const [dance, setDance] = useState('spin')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Tocar Feliz Cumpleaños al entrar
+  useEffect(() => {
+    ShooterAudio.init()
+    ShooterAudio.happyBirthday()
+  }, [])
+
   const handleSave = async () => {
-    if (!name.trim()) return
+    if (!playerName.trim()) return
     setSaving(true)
     setError('')
     try {
-      await saveShooterScore({ name: name.trim(), emoji, dance, score, level: maxLevels })
+      await saveShooterScore({ name: playerName.trim(), emoji, dance, score, level: maxLevels })
       setSaved(true)
     } catch (e) {
       setError('Error al guardar. Intenta de nuevo.')
@@ -167,7 +174,7 @@ export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) 
             lineHeight: 1.6,
             marginBottom: 10,
           }}>
-            ¡UNIVERSO<br />LIBERADO!
+            ¡FELIZ CUMPLE<br />{birthdayName.toUpperCase() || 'CAMPEÓN'}!
           </h1>
           <p style={{
             fontFamily: t.fB,
@@ -175,7 +182,7 @@ export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) 
             color: 'rgba(255,255,255,0.65)',
             letterSpacing: 1,
           }}>
-            Todos los sectores conquistados
+            {maxLevels > 1 ? `Todos los ${maxLevels} sectores conquistados` : 'Sector conquistado'} 🎂
           </p>
         </div>
 
@@ -227,8 +234,8 @@ export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) 
             </div>
 
             <input
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="Tu nombre"
               maxLength={14}
@@ -256,14 +263,14 @@ export default function AllClearScreen({ score, maxLevels = 5, nav, onReplay }) 
 
             <button
               onClick={handleSave}
-              disabled={!name.trim() || saving}
+              disabled={!playerName.trim() || saving}
               style={{
                 fontFamily: "'Press Start 2P',monospace", fontSize: 9,
                 padding: '10px', width: '100%',
-                background: name.trim() ? 'linear-gradient(135deg,#ffd70022,#ff006e22)' : 'transparent',
-                border: `2px solid ${name.trim() ? '#ffd700' : 'rgba(255,255,255,0.15)'}`,
-                color: name.trim() ? '#ffd700' : 'rgba(255,255,255,0.3)',
-                borderRadius: 8, cursor: name.trim() ? 'pointer' : 'default',
+                background: playerName.trim() ? 'linear-gradient(135deg,#ffd70022,#ff006e22)' : 'transparent',
+                border: `2px solid ${playerName.trim() ? '#ffd700' : 'rgba(255,255,255,0.15)'}`,
+                color: playerName.trim() ? '#ffd700' : 'rgba(255,255,255,0.3)',
+                borderRadius: 8, cursor: playerName.trim() ? 'pointer' : 'default',
                 boxSizing: 'border-box',
               }}
             >
