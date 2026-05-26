@@ -8,7 +8,7 @@ import BackButton from '../components/BackButton.jsx'
 import { useGameLoop } from './useGameLoop.js'
 import { ShooterAudio } from './audio.js'
 import { saveShooterScore, loadShooterLeaderboard } from './firebase.js'
-import { LEVELS, PLAYER, POWERUP, BOSS_PHASES } from './constants.js'
+import { LEVELS, PLAYER, POWERUP, BOSS_PHASES, BULLET_STYLES } from './constants.js'
 import DancePicker from '../components/DancePicker.jsx'
 import '../styles/gameKeyframes.css'
 
@@ -72,7 +72,7 @@ function SpaceBackground() {
 }
 
 // ── PlayerSprite — nave SVG ────────────────────────────────────
-function ShipSVG({ w, h, hasShield, hasRapid, isInvincible }) {
+function ShipSVG({ w, h, hasShield, hasRapid, isInvincible, initial }) {
   const body   = hasShield ? '#22eeff' : hasRapid ? '#ffd700' : '#0099ee'
   const stripe = hasShield ? '#88ffff' : hasRapid ? '#ffee88' : '#44ccff'
   const wing   = hasShield ? '#005577' : hasRapid ? '#886600' : '#003366'
@@ -119,6 +119,20 @@ function ShipSVG({ w, h, hasShield, hasRapid, isInvincible }) {
       <ellipse cx="22" cy="18" rx="5.5" ry="8"    fill="#0099cc" opacity="0.3" />
       <ellipse cx="20" cy="14" rx="2"   ry="3"    fill="#ffffff"  opacity="0.25" />
 
+      {/* ── Inicial del cumpleañero ── */}
+      {initial && (
+        <text
+          x="22" y="26"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontFamily="'Press Start 2P', monospace"
+          fontSize="8"
+          fill="#ffffff"
+          opacity="0.9"
+          fontWeight="bold"
+        >{initial}</text>
+      )}
+
       {/* ── Motores (cuadros inferiores) ── */}
       <rect x="10" y="35" width="8" height="4" rx="2" fill="#001e3d" />
       <rect x="26" y="35" width="8" height="4" rx="2" fill="#001e3d" />
@@ -140,7 +154,7 @@ function ShipSVG({ w, h, hasShield, hasRapid, isInvincible }) {
   )
 }
 
-function PlayerSprite({ player, scaleX, scaleY }) {
+function PlayerSprite({ player, scaleX, scaleY, initial }) {
   if (!player) return null
   const x = player.x * scaleX
   const y = player.y * scaleY
@@ -155,7 +169,7 @@ function PlayerSprite({ player, scaleX, scaleY }) {
       position: 'absolute', left: x, top: y, width: w, height: h,
       userSelect: 'none', pointerEvents: 'none', zIndex: 10,
     }}>
-      <ShipSVG w={w} h={h} hasShield={hasShield} hasRapid={hasRapid} isInvincible={isInvincible} />
+      <ShipSVG w={w} h={h} hasShield={hasShield} hasRapid={hasRapid} isInvincible={isInvincible} initial={initial} />
     </div>
   )
 }
@@ -217,12 +231,28 @@ function BossSprite({ boss, scaleX, scaleY }) {
 }
 
 // ── Bullets ────────────────────────────────────────────────────
-function Bullets({ bullets, scaleX, scaleY }) {
+function Bullets({ bullets, scaleX, scaleY, bulletStyle }) {
   if (!bullets?.length) return null
+  const EMOJI_MAP = { gift: '🎁', balloon: '🎈', star: '⭐' }
   return (
     <>
       {bullets.map(b => {
         const isPlayer = b.type === 'player'
+        if (isPlayer && bulletStyle !== 'default' && EMOJI_MAP[bulletStyle]) {
+          return (
+            <div key={b.id} style={{
+              position: 'absolute',
+              left: b.x * scaleX - 8,
+              top:  b.y * scaleY - 8,
+              fontSize: Math.max(12, 16 * Math.min(scaleX, scaleY)),
+              zIndex: 8, pointerEvents: 'none',
+              lineHeight: 1,
+              userSelect: 'none',
+            }}>
+              {EMOJI_MAP[bulletStyle]}
+            </div>
+          )
+        }
         return (
           <div key={b.id} style={{
             position: 'absolute',
@@ -372,9 +402,10 @@ function BossHpBar({ boss }) {
         <span style={{
           fontFamily: "'Press Start 2P',monospace",
           fontSize: 7, color, whiteSpace: 'nowrap',
+          overflow: 'hidden', maxWidth: 120,
           animation: isLow ? 'blink 0.5s ease-in-out infinite' : undefined,
         }}>
-          {boss.emoji} BOSS
+          {boss.emoji} {boss.villainName || 'BOSS'}
         </span>
         <div style={{
           flex: 1, height: 10, background: 'rgba(255,255,255,0.1)',
@@ -525,52 +556,122 @@ function Overlay({ children, bg = 'rgba(2,2,20,0.9)' }) {
 }
 
 // ── Pantalla Intro ─────────────────────────────────────────────
-function IntroScreen({ level, maxLevels, onStart, onBack }) {
+function IntroScreen({ level, maxLevels, name, bulletStyle, onBulletStyle, onStart, onBack }) {
   const lvl = LEVELS[Math.min(level - 1, LEVELS.length - 1)]
+  const mission = lvl.mission.replace(/\[NAME\]/g, name)
 
   return (
     <Overlay>
-      <div style={{ textAlign: 'center', width: '100%', maxWidth: 300 }}>
+      <div style={{
+        textAlign: 'center', width: '100%', maxWidth: 300,
+        overflowY: 'auto', maxHeight: '92vh',
+      }}>
 
-        {/* Mini preview de sectores */}
+        {/* Boss previews */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
           {LEVELS.slice(0, maxLevels).map((l, i) => (
             <div key={i} style={{
               fontSize: 22,
-              opacity: i === level - 1 ? 1 : 0.35,
+              opacity: i === level - 1 ? 1 : 0.3,
               filter: i === level - 1 ? 'drop-shadow(0 0 6px #ffd700)' : 'none',
               transition: 'all 0.2s',
-            }}>
-              {l.bossEmoji}
-            </div>
+            }}>{l.bossEmoji}</div>
           ))}
         </div>
 
+        {/* Title */}
         <h1 style={{
           fontFamily: "'Press Start 2P',monospace",
-          fontSize: 'clamp(13px,4vw,19px)', color: '#00d4ff',
-          textShadow: '0 0 20px #00d4ff', marginBottom: 6,
+          fontSize: 'clamp(11px,3.5vw,16px)', color: '#00d4ff',
+          textShadow: '0 0 20px #00d4ff', marginBottom: 2,
           animation: 'title-glow 2s ease-in-out infinite',
+          lineHeight: 1.5,
         }}>SPACE BLASTER</h1>
-
         <div style={{
-          fontFamily: "'Press Start 2P',monospace",
-          fontSize: 8, color: '#ff006e', marginBottom: 16,
-          textShadow: '0 0 10px #ff006e',
-        }}>{lvl.label} {maxLevels > 1 ? `(${level}/${maxLevels})` : ''}</div>
+          fontFamily: "'Share Tech Mono',monospace",
+          fontSize: 'clamp(9px,2.5vw,11px)', color: '#00aacc',
+          marginBottom: 6, letterSpacing: 1,
+        }}>by {name}</div>
 
+        {/* Sector + villain */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{
+            fontFamily: "'Press Start 2P',monospace",
+            fontSize: 7, color: '#ff006e',
+            textShadow: '0 0 10px #ff006e',
+            marginBottom: 3,
+          }}>{lvl.label}{maxLevels > 1 ? ` (${level}/${maxLevels})` : ''}</div>
+          <div style={{
+            fontFamily: "'Press Start 2P',monospace",
+            fontSize: 8, color: '#ffd700',
+            textShadow: '0 0 8px #ffd700',
+          }}>{lvl.bossEmoji} {lvl.villainName}</div>
+        </div>
+
+        {/* Mission */}
         <div style={{
-          background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.18)',
-          borderRadius: 10, padding: '12px 14px', marginBottom: 22,
+          background: 'rgba(255,215,0,0.07)',
+          border: '1px solid rgba(255,215,0,0.2)',
+          borderRadius: 8, padding: '10px 12px', marginBottom: 12,
+        }}>
+          <div style={{
+            fontFamily: "'Share Tech Mono',monospace",
+            fontSize: 'clamp(9px,2.5vw,11px)',
+            color: 'rgba(255,255,255,0.8)',
+            lineHeight: 1.6,
+          }}>{mission}</div>
+        </div>
+
+        {/* Bullet style picker */}
+        <div style={{
+          background: 'rgba(0,212,255,0.07)',
+          border: '1px solid rgba(0,212,255,0.18)',
+          borderRadius: 8, padding: '8px 10px', marginBottom: 12,
+        }}>
+          <div style={{
+            fontFamily: "'Press Start 2P',monospace",
+            fontSize: 6, color: 'rgba(0,212,255,0.7)',
+            marginBottom: 7, letterSpacing: 1,
+          }}>ELIGE TU DISPARO</div>
+          <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+            {BULLET_STYLES.map(bs => {
+              const active = bulletStyle === bs.id
+              return (
+                <button key={bs.id} onClick={() => onBulletStyle(bs.id)} style={{
+                  flex: 1,
+                  padding: '6px 2px',
+                  fontFamily: "'Press Start 2P',monospace",
+                  fontSize: 6,
+                  background: active ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${active ? '#00d4ff' : 'rgba(255,255,255,0.15)'}`,
+                  borderRadius: 6,
+                  color: active ? '#00d4ff' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', gap: 3,
+                  transition: 'all 0.15s',
+                }}>
+                  <span style={{ fontSize: 14 }}>{bs.emoji || '⚡'}</span>
+                  <span>{bs.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div style={{
+          background: 'rgba(0,212,255,0.05)',
+          border: '1px solid rgba(0,212,255,0.12)',
+          borderRadius: 8, padding: '8px 10px', marginBottom: 16,
         }}>
           <p style={{
             fontFamily: "'Share Tech Mono',monospace",
-            fontSize: 11, color: 'rgba(255,255,255,0.72)', lineHeight: 2, margin: 0,
+            fontSize: 10, color: 'rgba(255,255,255,0.6)', lineHeight: 1.9, margin: 0,
           }}>
             🎮 Deslizá / WASD / ←↑→↓<br/>
             ⚡ Disparo automático<br/>
             🛡️⚡ Recolectá power-ups<br/>
-            💥 Destruí al boss {lvl.bossEmoji}<br/>
             ❤️ Tenés {PLAYER.health} vidas
           </p>
         </div>
@@ -778,6 +879,8 @@ function DefeatScreen({ score, level, onRetry, onBack }) {
 // ── Componente principal ───────────────────────────────────────
 export default function Game({ cfg, nav, onAllClear }) {
   const maxLevels = Math.min(Math.max(cfg.shooterLevels ?? LEVELS.length, 1), LEVELS.length)
+  const [bulletStyle, setBulletStyle] = useState('default')
+  const shipInitial = (cfg.name?.[0] ?? '').toUpperCase()
   const [phase, setPhase]       = useState('intro')
   const [level, setLevel]       = useState(1)
   const [finalScore, setFinalScore] = useState(0)
@@ -893,8 +996,8 @@ export default function Game({ cfg, nav, onAllClear }) {
           {isActive && rs && (
             <>
               <BossSprite   boss={rs.boss}     scaleX={scaleX} scaleY={scaleY} />
-              <PlayerSprite player={rs.player} scaleX={scaleX} scaleY={scaleY} />
-              <Bullets      bullets={rs.bullets} scaleX={scaleX} scaleY={scaleY} />
+              <PlayerSprite player={rs.player} scaleX={scaleX} scaleY={scaleY} initial={shipInitial} />
+              <Bullets      bullets={rs.bullets} scaleX={scaleX} scaleY={scaleY} bulletStyle={bulletStyle} />
               <PowerUps     powerUps={rs.powerUps} scaleX={scaleX} scaleY={scaleY} />
               <Effects      effects={rs.effects}   scaleX={scaleX} scaleY={scaleY} />
             </>
@@ -926,6 +1029,9 @@ export default function Game({ cfg, nav, onAllClear }) {
           <IntroScreen
             level={level}
             maxLevels={maxLevels}
+            name={cfg.name}
+            bulletStyle={bulletStyle}
+            onBulletStyle={setBulletStyle}
             onStart={handleStart}
             onBack={handleBack}
           />

@@ -27,11 +27,19 @@ export const BOSS = {
 
 // ── 5 Sectores con emoji de boss único ───────────────────────
 export const LEVELS = [
-  { bossHealth: 50,  bossSpeed: 0.9,  bossShootInterval: 72, label: 'Sector I',   bossEmoji: '👾' },
-  { bossHealth: 75,  bossSpeed: 1.25, bossShootInterval: 56, label: 'Sector II',  bossEmoji: '👽' },
-  { bossHealth: 100, bossSpeed: 1.55, bossShootInterval: 44, label: 'Sector III', bossEmoji: '🤖' },
-  { bossHealth: 135, bossSpeed: 1.9,  bossShootInterval: 34, label: 'Sector IV',  bossEmoji: '💀' },
-  { bossHealth: 170, bossSpeed: 2.35, bossShootInterval: 26, label: 'Sector V',   bossEmoji: '☠️' },
+  { bossHealth: 50,  bossSpeed: 0.9,  bossShootInterval: 72, label: 'Sector I',   bossEmoji: '👾', villainName: 'El Globo Malvado',     mission: '¡El Globo Malvado robó los globos de [NAME]! 🎈 ¡Recuperalos!' },
+  { bossHealth: 75,  bossSpeed: 1.25, bossShootInterval: 56, label: 'Sector II',  bossEmoji: '👽', villainName: 'El Alien Aguafiestas',  mission: '¡El Alien Aguafiestas raptó a los invitados de [NAME]! 🎊' },
+  { bossHealth: 100, bossSpeed: 1.55, bossShootInterval: 44, label: 'Sector III', bossEmoji: '🤖', villainName: 'El Robot Fastidioso',   mission: '¡El Robot apagó las velitas del pastel de [NAME]! 🎂 ¡Encendelas de nuevo!' },
+  { bossHealth: 135, bossSpeed: 1.9,  bossShootInterval: 34, label: 'Sector IV',  bossEmoji: '💀', villainName: 'El Esqueleto Ladrón',   mission: '¡El Esqueleto Ladrón se robó todos los regalos de [NAME]! 🎁' },
+  { bossHealth: 170, bossSpeed: 2.35, bossShootInterval: 26, label: 'Sector V',   bossEmoji: '☠️', villainName: 'El Pirata del Cosmos',  mission: '¡El Pirata del Cosmos quiere arruinar el gran festejo de [NAME]! 🏴‍☠️' },
+]
+
+// ── Estilos de balas del jugador ──────────────────────────────
+export const BULLET_STYLES = [
+  { id: 'default', emoji: null,  label: 'LÁSER'    },
+  { id: 'gift',    emoji: '🎁',  label: 'REGALO'   },
+  { id: 'balloon', emoji: '🎈',  label: 'GLOBO'    },
+  { id: 'star',    emoji: '⭐',  label: 'ESTRELLA' },
 ]
 
 // ── Fases del boss (por % de HP restante) ────────────────────

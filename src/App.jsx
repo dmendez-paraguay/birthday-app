@@ -89,7 +89,7 @@ export default function App() {
         {screen === 'rsvp'    && <RSVPScreen cfg={cfg} nav={nav} />}
         {screen === 'admin'   && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
         {screen === 'photos'  && <PhotoGallery cfg={cfg} nav={nav} />}
-        {screen === 'allclear' && <AllClearScreen score={allClearScore} maxLevels={allClearLevels} nav={nav} onReplay={() => { setScreen('shooter') }} />}
+        {screen === 'allclear' && <AllClearScreen score={allClearScore} maxLevels={allClearLevels} birthdayName={cfg.name} nav={nav} onReplay={() => { setScreen('shooter') }} />}
       </div>
       {showNav && (
         <NavBar

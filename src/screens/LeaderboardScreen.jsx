@@ -153,6 +153,23 @@ export default function LeaderboardScreen({ cfg, nav }) {
           })}
         </div>
 
+        {/* Banner shooter — Protectores de la fiesta */}
+        {tab === 'shooter' && (
+          <div style={{
+            textAlign: 'center',
+            fontFamily: t.fB,
+            fontSize: 'clamp(10px,2.8vw,13px)',
+            color: t.fg2,
+            marginBottom: 14,
+            lineHeight: 1.6,
+          }}>
+            🎂 Protectores de la fiesta de{' '}
+            <span style={{ color: t.a1, fontFamily: t.fH, fontSize: 'clamp(10px,2.8vw,13px)' }}>
+              {cfg.name}
+            </span>
+          </div>
+        )}
+
         {/* Loading state */}
         {entries.length === 0 && knownIds.current.size === 0 && (
           <div style={{ color: t.fg2, textAlign: 'center', padding: 40, fontFamily: t.fH, fontSize: 11 }}>
