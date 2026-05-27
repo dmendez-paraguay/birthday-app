@@ -49,16 +49,22 @@ export default function RSVPScreen({ cfg, nav }) {
 
       <div style={{ position: 'relative', zIndex: 10, padding: '20px 20px 110px', maxWidth: 500, margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
-          <BackButton t={t} onClick={() => nav('home')} />
-          <div style={{ fontFamily: t.fH, color: t.a1, fontSize: 'clamp(10px,2.8vw,15px)', flex: 1 }}>
-            {cfg.style === 'kawaii' ? '📋 Asistencia' : '📋 ASISTENCIA'}
+        <div style={{ marginBottom: 22 }}>
+          {/* Fila 1: botón volver */}
+          <div style={{ marginBottom: 10 }}>
+            <BackButton t={t} onClick={() => nav('home')} />
           </div>
-          {rsvps && (
-            <div style={{ fontFamily: t.fB, color: t.fg2, fontSize: 'clamp(11px,3vw,14px)' }}>
-              {rsvps.length} 🎉
+          {/* Fila 2: título + contador */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <div style={{ fontFamily: t.fH, color: t.a1, fontSize: 'clamp(13px,3.5vw,18px)' }}>
+              {cfg.style === 'kawaii' ? '📋 Asistencia' : '📋 ASISTENCIA'}
             </div>
-          )}
+            {rsvps && (
+              <div style={{ fontFamily: t.fB, color: t.fg2, fontSize: 'clamp(11px,2.8vw,13px)' }}>
+                {rsvps.length} 🎉
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Confirmed banner */}
