@@ -482,38 +482,42 @@ export default function PhotoGallery({ cfg, nav }) {
       <div style={{ position: 'relative', zIndex: 10, padding: '20px 16px 100px', maxWidth: 600, margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <BackButton t={t} onClick={() => nav('home')} />
-          <div style={{ flex: 1 }}>
+        <div style={{ marginBottom: 20 }}>
+          {/* Fila 1: botón volver + badge EN VIVO */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <BackButton t={t} onClick={() => nav('home')} />
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'rgba(0,255,120,0.1)',
+              border: '1px solid rgba(0,255,120,0.3)',
+              borderRadius: 20, padding: '4px 10px',
+              flexShrink: 0,
+            }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#00ff78', boxShadow: '0 0 6px #00ff78',
+                animation: 'pulse 1.2s ease-in-out infinite',
+              }} />
+              <span style={{
+                fontFamily: t.fH, fontSize: 'clamp(7px,1.8vw,9px)',
+                color: '#00ff78', letterSpacing: '0.5px',
+              }}>EN VIVO</span>
+            </div>
+          </div>
+          {/* Fila 2: título */}
+          <div>
             <div style={{
               fontFamily: t.fH, color: t.a1,
-              fontSize: 'clamp(10px,2.8vw,15px)',
+              fontSize: 'clamp(13px,3.5vw,18px)',
               textShadow: cfg.style === 'arcade' ? `0 0 12px ${t.a1}` : undefined,
             }}>
               📷 Galería
             </div>
             {photos !== null && photos.length > 0 && (
-              <div style={{ color: t.fg2, fontSize: 'clamp(8px,2vw,10px)', fontFamily: t.fB, marginTop: 2 }}>
+              <div style={{ color: t.fg2, fontSize: 'clamp(9px,2.2vw,11px)', fontFamily: t.fB, marginTop: 2 }}>
                 {photos.length} foto{photos.length !== 1 ? 's' : ''}
               </div>
             )}
-          </div>
-          {/* Live indicator */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(0,255,120,0.1)',
-            border: '1px solid rgba(0,255,120,0.3)',
-            borderRadius: 20, padding: '4px 10px',
-          }}>
-            <div style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#00ff78', boxShadow: '0 0 6px #00ff78',
-              animation: 'pulse 1.2s ease-in-out infinite',
-            }} />
-            <span style={{
-              fontFamily: t.fH, fontSize: 'clamp(6px,1.6vw,8px)',
-              color: '#00ff78', letterSpacing: '0.5px',
-            }}>EN VIVO</span>
           </div>
         </div>
 
