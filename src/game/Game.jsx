@@ -903,6 +903,7 @@ export default function Game({ cfg, nav, onAllClear }) {
   const handleVictory = useCallback((score) => {
     setFinalScore(score)
     if (level === maxLevels && onAllClear) {
+      setPhase('complete')   // detiene el game loop (active = phase === 'playing' → false)
       setTimeout(() => {
         onAllClear(accScore + score, maxLevels)
       }, 1200)

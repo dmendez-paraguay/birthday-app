@@ -333,7 +333,7 @@ export function tickCollisions(state) {
   for (const b of bullets) {
     let consumed = false
 
-    if (b.type === 'player' && intersects(b, boss)) {
+    if (b.type === 'player' && boss && !boss.dead && intersects(b, boss)) {
       // Boss recibe daño (incluso durante entrada para fase early)
       if (boss.entryDone) {
         const hitScore = SCORE.hitBoss * newMultiplier
@@ -405,6 +405,8 @@ export function tickCollisions(state) {
           // Shake masivo
           newShakeX = SHAKE.bossDead * (Math.random() > 0.5 ? 1 : -1)
           newShakeY = SHAKE.bossDead * (Math.random() > 0.5 ? 1 : -1)
+          // Marcar como muerto para no disparar boss-dead de nuevo en frames siguientes
+          boss = { ...boss, dead: true }
         }
       }
       consumed = true
