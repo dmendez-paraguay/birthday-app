@@ -45,25 +45,39 @@ export function subscribeTopPhoto(callback) {
   }
 }
 
-/** Redimensiona una imagen a máx maxDim px (canvas API) → Blob JPEG */
-async function resizeImage(file, maxDim = 1200) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      let { width, height } = img
-      if (width > maxDim || height > maxDim) {
-        if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim }
-        else                 { width  = Math.round(width  * maxDim / height); height = maxDim }
+/**
+ * Redimensiona una imagen a máx maxDim px (canvas API) → Blob JPEG.
+ * Usa FileReader en vez de createObjectURL para compatibilidad con Android Chrome.
+ * Si el canvas falla por cualquier motivo, devuelve el archivo original.
+ */
+function resizeImage(file, maxDim = 1200) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onerror = () => resolve(file)   // fallback: subir original
+    reader.onload = (ev) => {
+      const img = new Image()
+      img.onerror = () => resolve(file)    // fallback: subir original
+      img.onload = () => {
+        try {
+          let { width, height } = img
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim }
+            else                 { width  = Math.round(width  * maxDim / height); height = maxDim }
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = width; canvas.height = height
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+          canvas.toBlob(
+            (b) => resolve(b ?? file),     // fallback si toBlob retorna null
+            'image/jpeg', 0.82
+          )
+        } catch {
+          resolve(file)                    // fallback: error de canvas
+        }
       }
-      const canvas = document.createElement('canvas')
-      canvas.width = width; canvas.height = height
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-      canvas.toBlob(b => b ? resolve(b) : reject(new Error('resize')), 'image/jpeg', 0.82)
+      img.src = ev.target.result
     }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load')) }
-    img.src = url
+    reader.readAsDataURL(file)
   })
 }
 
@@ -80,13 +94,8 @@ export async function uploadPhoto({ file, name, emoji, caption = '' }) {
     )
   }
 
-  // 1. Redimensionar en el browser
-  let blob
-  try {
-    blob = await resizeImage(file)
-  } catch (e) {
-    throw new Error(`❌ Error al procesar la imagen: ${e.message}`)
-  }
+  // 1. Redimensionar (o usar original si el canvas falla en mobile)
+  const blob = await resizeImage(file)
 
   // 2. Subir a Cloudinary
   const form = new FormData()
