@@ -3,20 +3,46 @@
  * Cloudinary reemplaza Firebase Storage: tier gratuito sin tarjeta de crédito.
  */
 import { db } from './firebase.js'
-import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import {
+  collection, addDoc, query, orderBy, onSnapshot, deleteDoc,
+  doc, updateDoc, increment, limit,
+} from 'firebase/firestore'
 
 const PHOTOS_COL = () => collection(db, 'photos')
 
 const CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-/** Suscripción en tiempo real a la galería de fotos */
+/** Suscripción en tiempo real a la galería de fotos, ordenadas por fecha desc */
 export function subscribePhotos(callback) {
   const q = query(PHOTOS_COL(), orderBy('date', 'desc'))
   return onSnapshot(q,
     snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
     () => callback([])
   )
+}
+
+/**
+ * Suscripción en tiempo real a la foto con más likes.
+ * Devuelve null si no hay fotos o ninguna tiene likes todavía.
+ */
+export function subscribeTopPhoto(callback) {
+  try {
+    const q = query(PHOTOS_COL(), orderBy('likes', 'desc'), limit(1))
+    return onSnapshot(q,
+      snap => {
+        const top = snap.docs[0]
+        callback(top && (top.data().likes || 0) > 0
+          ? { id: top.id, ...top.data() }
+          : null
+        )
+      },
+      () => callback(null)
+    )
+  } catch {
+    callback(null)
+    return () => {}
+  }
 }
 
 /** Redimensiona una imagen a máx maxDim px (canvas API) → Blob JPEG */
@@ -73,7 +99,7 @@ export async function uploadPhoto({ file, name, emoji, caption = '' }) {
 
   const { secure_url, public_id } = await res.json()
 
-  // 3. Guardar metadatos en Firestore
+  // 3. Guardar metadatos en Firestore (likes: 0 para que el índice lo incluya)
   await addDoc(PHOTOS_COL(), {
     name:         name.trim(),
     emoji,
@@ -81,6 +107,17 @@ export async function uploadPhoto({ file, name, emoji, caption = '' }) {
     url:          secure_url,
     cloudinaryId: public_id,
     date:         new Date().toISOString(),
+    likes:        0,
+  })
+}
+
+/**
+ * Incrementa el contador de likes de una foto en +1.
+ * La regla Firestore solo permite modificar el campo 'likes' en +1.
+ */
+export async function likePhoto(photoId) {
+  await updateDoc(doc(db, 'photos', photoId), {
+    likes: increment(1),
   })
 }
 
