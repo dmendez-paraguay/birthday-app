@@ -3,6 +3,7 @@ import { T, btnStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import TimerBox from '../components/TimerBox.jsx'
 import Dragon3D from '../components/Dragon3D.jsx'
+import { subscribeTopPhoto } from '../lib/storage.js'
 
 function useCountdown(date) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0, done: false })
@@ -23,6 +24,69 @@ function useCountdown(date) {
     return () => clearInterval(id)
   }, [date])
   return t
+}
+
+// ── Banner de la foto más votada ──────────────────────────────────────────────
+// Solo se muestra cuando al menos una foto tiene al menos 1 like.
+function TopPhotoBanner({ t, onClickGallery }) {
+  const [topPhoto, setTopPhoto] = useState(undefined)  // undefined=cargando, null=sin likes
+
+  useEffect(() => {
+    return subscribeTopPhoto(photo => setTopPhoto(photo ?? null))
+  }, [])
+
+  if (!topPhoto) return null  // sin datos o sin likes aún
+
+  return (
+    <div
+      onClick={onClickGallery}
+      style={{
+        width: '100%', maxWidth: 320,
+        display: 'flex', gap: 12, alignItems: 'center',
+        padding: '11px 14px',
+        border: '1px solid rgba(255,215,0,0.3)',
+        borderRadius: t.r,
+        background: 'rgba(255,215,0,0.06)',
+        cursor: 'pointer',
+        animation: 'appear 0.5s ease-out',
+        boxShadow: '0 0 18px rgba(255,215,0,0.08)',
+        transition: 'background 0.18s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.11)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,215,0,0.06)'}
+    >
+      <img
+        src={topPhoto.url}
+        alt={topPhoto.name}
+        style={{
+          width: 50, height: 50, borderRadius: t.r,
+          objectFit: 'cover', flexShrink: 0,
+          border: '1.5px solid rgba(255,215,0,0.35)',
+        }}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: t.fH, fontSize: 8, color: '#ffd700', letterSpacing: 0.8, marginBottom: 3 }}>
+          📷 FOTO MÁS VOTADA
+        </div>
+        <div style={{
+          color: t.fg, fontSize: 12, fontWeight: 700,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {topPhoto.emoji} {topPhoto.name}
+        </div>
+        {topPhoto.caption && (
+          <div style={{
+            color: t.fg2, fontSize: 10,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>"{topPhoto.caption}"</div>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, gap: 2 }}>
+        <span style={{ fontSize: 18 }}>❤️</span>
+        <span style={{ fontFamily: t.fH, fontSize: 10, color: '#ffd700' }}>{topPhoto.likes}</span>
+      </div>
+    </div>
+  )
 }
 
 export default function HomeScreen({ cfg, nav }) {
@@ -207,6 +271,9 @@ export default function HomeScreen({ cfg, nav }) {
               📋 {cfg.style === 'kawaii' ? 'Asistencia' : 'ASISTENCIA'}
             </button>
           </div>
+
+          {/* Foto más votada — aparece dinámicamente cuando hay likes */}
+          <TopPhotoBanner t={t} onClickGallery={() => nav('photos')} />
         </div>
 
         {/* Kawaii decorations */}
