@@ -73,8 +73,8 @@ function UploadModal({ t, onClose, onUpload }) {
     try {
       await onUpload({ file, name: name.trim(), emoji, caption })
       onClose()
-    } catch {
-      setError('Error al subir. Intenta de nuevo.')
+    } catch (e) {
+      setError(e.message || 'Error al subir. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

@@ -69,46 +69,69 @@ async function resizeImage(file, maxDim = 1200) {
 
 /**
  * Sube una foto a Cloudinary y guarda los metadatos en Firestore.
+ * Los errores son específicos para facilitar el diagnóstico.
  * @param {{ file: File, name: string, emoji: string, caption?: string }} opts
  */
 export async function uploadPhoto({ file, name, emoji, caption = '' }) {
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error(
-      'Faltan variables de entorno: VITE_CLOUDINARY_CLOUD_NAME o VITE_CLOUDINARY_UPLOAD_PRESET'
+      '❌ Variables de entorno faltantes: VITE_CLOUDINARY_CLOUD_NAME o VITE_CLOUDINARY_UPLOAD_PRESET.\n' +
+      'Verificá la configuración de Vercel.'
     )
   }
 
-  // 1. Redimensionar en el browser antes de subir (ahorra ancho de banda)
-  const blob = await resizeImage(file)
+  // 1. Redimensionar en el browser
+  let blob
+  try {
+    blob = await resizeImage(file)
+  } catch (e) {
+    throw new Error(`❌ Error al procesar la imagen: ${e.message}`)
+  }
 
-  // 2. Subir a Cloudinary vía unsigned upload preset (no requiere backend)
+  // 2. Subir a Cloudinary
   const form = new FormData()
   form.append('file', blob, 'photo.jpg')
   form.append('upload_preset', UPLOAD_PRESET)
   form.append('folder', 'birthday-app')
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: form }
-  )
+  let res
+  try {
+    res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: form }
+    )
+  } catch (e) {
+    throw new Error(`❌ Sin conexión a Cloudinary: ${e.message}`)
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.error?.message ?? `Cloudinary error ${res.status}`)
+    throw new Error(
+      `❌ Cloudinary (${res.status}): ${err.error?.message ?? 'Error desconocido'}.\n` +
+      'Verificá que el Upload Preset sea "Unsigned" en cloudinary.com'
+    )
   }
 
   const { secure_url, public_id } = await res.json()
 
-  // 3. Guardar metadatos en Firestore (likes: 0 para que el índice lo incluya)
-  await addDoc(PHOTOS_COL(), {
-    name:         name.trim(),
-    emoji,
-    caption:      caption.trim(),
-    url:          secure_url,
-    cloudinaryId: public_id,
-    date:         new Date().toISOString(),
-    likes:        0,
-  })
+  // 3. Guardar metadatos en Firestore
+  try {
+    await addDoc(PHOTOS_COL(), {
+      name:         name.trim(),
+      emoji,
+      caption:      caption.trim(),
+      url:          secure_url,
+      cloudinaryId: public_id,
+      date:         new Date().toISOString(),
+      likes:        0,
+    })
+  } catch (e) {
+    // La imagen ya subió a Cloudinary pero no se pudo guardar en Firestore
+    throw new Error(
+      `❌ Firestore: ${e.message}.\n` +
+      'La imagen se subió a Cloudinary pero no se guardó. Revisá las reglas de Firestore.'
+    )
+  }
 }
 
 /**
