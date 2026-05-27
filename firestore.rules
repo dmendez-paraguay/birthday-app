@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Configuración de la app — lectura libre, escritura libre (panel Admin)
+    match /config/{doc} {
+      allow read, write: if true;
+    }
+
+    // Leaderboard Globos — lectura libre, solo agregar (no editar ni borrar)
+    match /leaderboard/{doc} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Leaderboard Space Blaster — misma política
+    match /shooter_scores/{doc} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // RSVP — lectura y escritura libres (upsert por nombre)
+    match /rsvp/{doc} {
+      allow read, write: if true;
+    }
+
+    // Galería de fotos — lectura libre, agregar y borrar metadatos
+    match /photos/{doc} {
+      allow read:          if true;
+      allow create:        if true;
+      allow delete:        if true;   // para eliminar desde la galería
+      allow update:        if false;
+    }
+  }
+}

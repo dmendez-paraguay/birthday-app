@@ -1,6 +1,11 @@
 /**
  * audio.js — Motor de audio con Web Audio API.
  * Singleton: un solo contexto por sesión.
+ *
+ * Fix: Page Visibility API detiene/reanuda el contexto cuando la tab
+ * queda en segundo plano (cambia de app, minimiza, etc.).
+ * Fix: setTimeout del loop de música fuera del try-catch para que el
+ * loop nunca muera silenciosamente ante excepciones de AudioContext.
  */
 let ctx = null
 let musicOn = false
@@ -10,6 +15,20 @@ function getCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)()
   if (ctx.state === 'suspended') ctx.resume()
   return ctx
+}
+
+// ── Page Visibility API ───────────────────────────────────────
+// Suspende el AudioContext al pasar a segundo plano y lo reanuda
+// al volver, evitando que la música siga sonando con la app minimizada.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return
+    if (document.hidden) {
+      ctx.suspend()
+    } else if (musicOn && !_muted) {
+      ctx.resume()
+    }
+  })
 }
 
 function note(freq, t, dur, vol = 0.18, type = 'sine') {
@@ -71,8 +90,10 @@ export const Audio = {
         const c = getCtx(), t = c.currentTime
         mel.forEach((f, i) => note(f, t + i * 0.33, 0.28, 0.055, 'triangle'))
         ;[130, 146, 164, 130].forEach((f, i) => note(f, t + i * 1.1, 0.9, 0.04, 'sine'))
-        mTimer = setTimeout(play, mel.length * 330 + 400)
       } catch (e) {}
+      // setTimeout fuera del try-catch: el loop nunca muere aunque el
+      // AudioContext lance una excepción en una iteración puntual.
+      mTimer = setTimeout(play, mel.length * 330 + 400)
     }
     play()
   },
