@@ -1,18 +1,22 @@
 /**
- * storage.js — Galería de fotos con Firebase Storage + Firestore.
+ * storage.js — Galería de fotos con Cloudinary (upload) + Firestore (metadatos).
+ * Cloudinary reemplaza Firebase Storage: tier gratuito sin tarjeta de crédito.
  */
-import { storage, db } from './firebase.js'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db } from './firebase.js'
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
 
 const PHOTOS_COL = () => collection(db, 'photos')
 
+const CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+
 /** Suscripción en tiempo real a la galería de fotos */
 export function subscribePhotos(callback) {
   const q = query(PHOTOS_COL(), orderBy('date', 'desc'))
-  return onSnapshot(q, snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-  }, () => callback([]))
+  return onSnapshot(q,
+    snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    () => callback([])
+  )
 }
 
 /** Redimensiona una imagen a máx maxDim px (canvas API) → Blob JPEG */
@@ -25,7 +29,7 @@ async function resizeImage(file, maxDim = 1200) {
       let { width, height } = img
       if (width > maxDim || height > maxDim) {
         if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim }
-        else { width = Math.round(width * maxDim / height); height = maxDim }
+        else                 { width  = Math.round(width  * maxDim / height); height = maxDim }
       }
       const canvas = document.createElement('canvas')
       canvas.width = width; canvas.height = height
@@ -38,24 +42,49 @@ async function resizeImage(file, maxDim = 1200) {
 }
 
 /**
- * Sube una foto a Storage y guarda metadatos en Firestore.
+ * Sube una foto a Cloudinary y guarda los metadatos en Firestore.
  * @param {{ file: File, name: string, emoji: string, caption?: string }} opts
  */
 export async function uploadPhoto({ file, name, emoji, caption = '' }) {
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    throw new Error(
+      'Faltan variables de entorno: VITE_CLOUDINARY_CLOUD_NAME o VITE_CLOUDINARY_UPLOAD_PRESET'
+    )
+  }
+
+  // 1. Redimensionar en el browser antes de subir (ahorra ancho de banda)
   const blob = await resizeImage(file)
-  const path = `photos/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
-  const storageRef = ref(storage, path)
-  await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' })
-  const url = await getDownloadURL(storageRef)
+
+  // 2. Subir a Cloudinary vía unsigned upload preset (no requiere backend)
+  const form = new FormData()
+  form.append('file', blob, 'photo.jpg')
+  form.append('upload_preset', UPLOAD_PRESET)
+  form.append('folder', 'birthday-app')
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: form }
+  )
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error?.message ?? `Cloudinary error ${res.status}`)
+  }
+
+  const { secure_url, public_id } = await res.json()
+
+  // 3. Guardar metadatos en Firestore
   await addDoc(PHOTOS_COL(), {
-    name: name.trim(), emoji,
-    caption: caption.trim(),
-    url, path,
-    date: new Date().toISOString(),
+    name:         name.trim(),
+    emoji,
+    caption:      caption.trim(),
+    url:          secure_url,
+    cloudinaryId: public_id,
+    date:         new Date().toISOString(),
   })
 }
 
-/** Elimina la entrada de Firestore (la imagen en Storage queda; limpieza vía Cloud Functions) */
+/** Elimina la entrada de Firestore (imagen en Cloudinary queda; borrar manualmente si hace falta) */
 export async function deletePhotoDoc(photoId) {
   await deleteDoc(doc(db, 'photos', photoId))
 }

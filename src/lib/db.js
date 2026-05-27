@@ -14,12 +14,35 @@ const CFG_REF   = () => doc(db, 'config', 'app')
 const LB_COL    = () => collection(db, 'leaderboard')
 const RSVP_COL  = () => collection(db, 'rsvp')
 
+// ── Estado de conexión (exportado para que la UI lo muestre) ───
+export const dbStatus = { ok: null, error: null, source: null }
+
 // ── Config ─────────────────────────────────────────────────────
 export async function loadConfig(defaults) {
   try {
+    console.log('[DB] Conectando a Firestore...')
     const snap = await getDoc(CFG_REF())
-    return snap.exists() ? { ...defaults, ...snap.data() } : defaults
-  } catch {
+    if (snap.exists()) {
+      dbStatus.ok = true
+      dbStatus.source = 'firestore'
+      dbStatus.error = null
+      console.log('[DB] ✅ Config cargada desde Firestore:', Object.keys(snap.data()))
+      return { ...defaults, ...snap.data() }
+    } else {
+      dbStatus.ok = false
+      dbStatus.source = 'defaults'
+      dbStatus.error = 'no-document'
+      console.warn(
+        '[DB] ⚠️ El documento config/app NO existe en Firestore.\n' +
+        '→ Solución: abrí el panel Admin (⚙️) y guardá la configuración.'
+      )
+      return defaults
+    }
+  } catch (err) {
+    dbStatus.ok = false
+    dbStatus.source = 'defaults'
+    dbStatus.error = err.code ?? err.message ?? 'unknown'
+    console.error('[DB] ❌ Error Firestore:', dbStatus.error, '\n', err)
     return defaults
   }
 }
@@ -36,7 +59,6 @@ export async function loadLeaderboard() {
 }
 
 export async function addScore(entry) {
-  // entry: { name, emoji, score, date }
   await addDoc(LB_COL(), entry)
 }
 
@@ -52,7 +74,6 @@ export async function loadRsvp() {
 }
 
 export async function addRsvp(entry) {
-  // Si ya existe un RSVP con el mismo nombre, lo sobreescribe
   const q = query(RSVP_COL(), where('nameLower', '==', entry.nameLower))
   const snap = await getDocs(q)
   if (!snap.empty) {
