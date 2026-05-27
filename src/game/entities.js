@@ -241,9 +241,9 @@ export function tickShooting(player, boss, bullets, dt) {
     shotFired = true
   }
 
-  // Disparo del boss (sólo tras entrada)
+  // Disparo del boss (sólo tras entrada y si no está muerto)
   const newBossBullets = []
-  if (boss.entryDone && newBoss.shootCooldown <= 0) {
+  if (boss.entryDone && !boss.dead && newBoss.shootCooldown <= 0) {
     const patterns = BOSS_PATTERNS[boss.phase] || BOSS_PATTERNS[1]
     const pattern  = patterns[boss.patternIdx % patterns.length]
     newBossBullets.push(...createBossBullets(newBoss, pattern, player.x, player.y))
@@ -412,7 +412,10 @@ export function tickCollisions(state) {
       consumed = true
     }
 
-    // ── Balas del boss → jugador ──────────────────────────
+    // ── Balas del boss → jugador (solo si boss no está muerto) ───
+    // Si el boss ya murió, sus balas en vuelo se descartan para evitar
+    // matar al jugador en la transición de victoria.
+    if (!consumed && b.type === 'boss' && boss?.dead) consumed = true
     if (!consumed && b.type === 'boss' && player.invincible === 0 && intersects(b, player)) {
       // Escudo absorbe el golpe
       if (player.shield > 0) {

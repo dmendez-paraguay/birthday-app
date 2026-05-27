@@ -903,7 +903,7 @@ export default function Game({ cfg, nav, onAllClear }) {
   const handleVictory = useCallback((score) => {
     setFinalScore(score)
     if (level === maxLevels && onAllClear) {
-      setPhase('complete')   // detiene el game loop (active = phase === 'playing' → false)
+      setPhase('allclear-transition')
       setTimeout(() => {
         onAllClear(accScore + score, maxLevels)
       }, 1200)
@@ -971,6 +971,7 @@ export default function Game({ cfg, nav, onAllClear }) {
   } : {}
 
   const isActive = phase === 'playing' || phase === 'paused'
+  const isTransition = phase === 'allclear-transition'
 
   return (
     <div style={{
@@ -1038,6 +1039,21 @@ export default function Game({ cfg, nav, onAllClear }) {
           />
         )}
         {phase === 'paused'  && <PauseScreen   onResume={handleResume} onBack={handleBack} />}
+        {isTransition && (
+          <Overlay bg="rgba(0,8,24,0.97)">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 72, marginBottom: 18, animation: 'victory-pulse 0.8s ease-in-out infinite' }}>🏆</div>
+              <div style={{
+                fontFamily: "'Press Start 2P',monospace",
+                fontSize: 'clamp(13px,4vw,18px)',
+                color: '#ffd700',
+                textShadow: '0 0 20px #ffd700',
+                animation: 'title-glow 1s ease-in-out infinite',
+                letterSpacing: 2,
+              }}>¡VICTORIA!</div>
+            </div>
+          </Overlay>
+        )}
         {phase === 'victory' && (
           <VictoryScreen
             score={finalScore} level={level} maxLevels={maxLevels}
