@@ -32,9 +32,10 @@ service cloud.firestore {
       allow create: if true;
       allow delete: if true;
       // Solo se permite actualizar el campo 'likes', incrementándolo en +1.
-      // resource.data.get('likes', 0) maneja fotos existentes sin el campo.
+      // Usa 'in' en vez de .get() para máxima compatibilidad con Rules v2.
+      // Maneja fotos viejas (sin campo 'likes') con el ternario.
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
-                    && request.resource.data.likes == resource.data.get('likes', 0) + 1;
+                    && request.resource.data.likes == ('likes' in resource.data ? resource.data.likes : 0) + 1;
     }
   }
 }
