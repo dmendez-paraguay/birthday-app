@@ -86,34 +86,38 @@ export default function LeaderboardScreen({ cfg, nav }) {
       <div style={{ position: 'relative', zIndex: 10, padding: '20px 20px 110px', maxWidth: 500, margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-          <BackButton t={t} onClick={() => nav('home')} />
+        <div style={{ marginBottom: 18 }}>
+          {/* Fila 1: botón volver + badge EN VIVO */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <BackButton t={t} onClick={() => nav('home')} />
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'rgba(0,255,120,0.1)',
+              border: '1px solid rgba(0,255,120,0.3)',
+              borderRadius: 20, padding: '4px 10px',
+              flexShrink: 0,
+            }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#00ff78',
+                boxShadow: '0 0 6px #00ff78',
+                animation: 'pulse 1.2s ease-in-out infinite',
+              }} />
+              <span style={{
+                fontFamily: t.fH,
+                fontSize: 'clamp(7px,1.8vw,9px)',
+                color: '#00ff78',
+                letterSpacing: '0.5px',
+              }}>EN VIVO</span>
+            </div>
+          </div>
+          {/* Fila 2: título */}
           <div style={{
             fontFamily: t.fH, color: t.a1,
-            fontSize: 'clamp(10px,2.8vw,15px)', flex: 1,
+            fontSize: 'clamp(13px,3.5vw,18px)',
             textShadow: cfg.style === 'arcade' ? `0 0 12px ${t.a1}` : undefined,
           }}>
             {isKawaii ? '🏆 Mural de Campeones' : '🏆 MURAL DE CAMPEONES'}
-          </div>
-          {/* Live indicator replaces refresh button */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(0,255,120,0.1)',
-            border: '1px solid rgba(0,255,120,0.3)',
-            borderRadius: 20, padding: '4px 10px',
-          }}>
-            <div style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#00ff78',
-              boxShadow: '0 0 6px #00ff78',
-              animation: 'pulse 1.2s ease-in-out infinite',
-            }} />
-            <span style={{
-              fontFamily: t.fH,
-              fontSize: 'clamp(6px,1.6vw,8px)',
-              color: '#00ff78',
-              letterSpacing: '0.5px',
-            }}>EN VIVO</span>
           </div>
         </div>
 
