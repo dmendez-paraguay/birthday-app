@@ -12,6 +12,8 @@ import GamesHub from './screens/GamesHub.jsx'
 import Game from './game/Game.jsx'
 import AllClearScreen from './screens/AllClearScreen.jsx'
 import PhotoGallery from './screens/PhotoGallery.jsx'
+import PinataBash from './screens/PinataBash.jsx'
+import MemoryGame from './screens/MemoryGame.jsx'
 
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULT_CFG)
@@ -36,7 +38,7 @@ export default function App() {
 
   const nav = s => {
     Audio.init()
-    if (s !== 'game' && s !== 'shooter') Audio.playChime()
+    if (!['game', 'shooter', 'pinata', 'memory'].includes(s)) Audio.playChime()
     setScreen(s)
   }
 
@@ -77,7 +79,7 @@ export default function App() {
     </div>
   )
 
-  const showNav = !['game', 'shooter', 'allclear'].includes(screen)
+  const showNav = !['game', 'shooter', 'allclear', 'pinata', 'memory'].includes(screen)
 
   return (
     <>
@@ -115,6 +117,8 @@ export default function App() {
         {screen === 'rsvp'    && <RSVPScreen cfg={cfg} nav={nav} />}
         {screen === 'admin'   && <AdminScreen cfg={cfg} setCfg={updateCfg} nav={nav} />}
         {screen === 'photos'  && <PhotoGallery cfg={cfg} nav={nav} />}
+        {screen === 'pinata'  && <PinataBash cfg={cfg} nav={nav} />}
+        {screen === 'memory'  && <MemoryGame cfg={cfg} nav={nav} />}
         {screen === 'allclear' && <AllClearScreen score={allClearScore} maxLevels={allClearLevels} name={cfg.name} nav={nav} onReplay={() => { setScreen('shooter') }} />}
       </div>
       {showNav && (

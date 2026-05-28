@@ -21,6 +21,20 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Leaderboard Piñata Bash
+    match /pinata_scores/{doc} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Leaderboard Memoria
+    match /memory_scores/{doc} {
+      allow read:   if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
     // RSVP — lectura y escritura libres (upsert por nombre)
     match /rsvp/{doc} {
       allow read, write: if true;
