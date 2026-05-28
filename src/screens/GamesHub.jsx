@@ -178,12 +178,19 @@ export default function GamesHub({ cfg, nav }) {
 
         {/* ── Separador "próximamente" ── */}
         {isLocked && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, rgba(255,215,0,0.25))` }} />
-            <div style={{ fontFamily: t.fH, fontSize: 8, color: 'rgba(255,215,0,0.7)', letterSpacing: 1, whiteSpace: 'nowrap' }}>
-              🔒 SE DESBLOQUEAN EL DÍA DEL EVENTO
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <div style={{ width: '100%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent)' }} />
+            <div style={{
+              fontFamily: t.fH,
+              fontSize: 'clamp(6px,1.7vw,8px)',
+              color: 'rgba(255,215,0,0.7)',
+              letterSpacing: '0.5px',
+              textAlign: 'center',
+              lineHeight: 1.6,
+            }}>
+              🔒 DÍA DEL EVENTO
             </div>
-            <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, rgba(255,215,0,0.25), transparent)` }} />
+            <div style={{ width: '100%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent)' }} />
           </div>
         )}
 

@@ -392,7 +392,7 @@ function FotoEstrella({ t, topPhoto, photos, onOpenLightbox }) {
       <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 20, flexShrink: 0 }}>{topPhoto.emoji}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>📸 {topPhoto.name}</div>
+          <div style={{ color: '#fff', fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📸 {topPhoto.name}</div>
           {topPhoto.caption && (
             <div style={{
               color: 'rgba(255,255,255,0.5)', fontSize: 11,

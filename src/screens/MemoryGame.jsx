@@ -66,12 +66,12 @@ function MemoryVictory({ moves, seconds, cfg, onReplay, onBack }) {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', gap: 14, width: '100%', justifyContent: 'center' }}>
-          {[['🥊', moves, 'MOVIMIENTOS'], ['⏱️', timeStr, 'TIEMPO'], ['⭐', score, 'PUNTOS']].map(([e, v, l]) => (
-            <div key={l} style={{ ...cardStyle(t), padding: '12px 16px', textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: 22, marginBottom: 4 }}>{e}</div>
-              <div style={{ fontFamily: t.fH, color: t.a3, fontSize: 'clamp(12px,3.5vw,18px)' }}>{v}</div>
-              <div style={{ color: t.fg2, fontSize: 8, fontFamily: t.fH, letterSpacing: 0.5, marginTop: 3 }}>{l}</div>
+        <div style={{ display: 'flex', gap: 8, width: '100%', justifyContent: 'center' }}>
+          {[['🥊', moves, 'MOVS'], ['⏱️', timeStr, 'TIEMPO'], ['⭐', score, 'PTS']].map(([e, v, l]) => (
+            <div key={l} style={{ ...cardStyle(t), padding: '10px 8px', textAlign: 'center', flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 20, marginBottom: 4 }}>{e}</div>
+              <div style={{ fontFamily: t.fH, color: t.a3, fontSize: 'clamp(11px,3.2vw,18px)', lineHeight: 1.2 }}>{v}</div>
+              <div style={{ color: t.fg2, fontSize: 'clamp(6px,1.6vw,8px)', fontFamily: t.fH, letterSpacing: 0.3, marginTop: 3 }}>{l}</div>
             </div>
           ))}
         </div>
