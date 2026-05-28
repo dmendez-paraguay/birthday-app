@@ -47,7 +47,7 @@ export default function NavBar({ cfg, nav, screen, muted, toggleMute }) {
     // 4-tap admin unlock (menos de 2s entre el primero y el cuarto)
     const now = Date.now()
     tapTimesRef.current = [...tapTimesRef.current, now].filter(t => now - t < 2000)
-    if (tapTimesRef.current.length >= 4) {
+    if (tapTimesRef.current.length >= 5) {
       sessionStorage.setItem('cam_admin_unlock', '1')
       setAdminUnlocked(true)
       tapTimesRef.current = []
