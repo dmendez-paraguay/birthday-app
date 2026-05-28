@@ -3,7 +3,7 @@
  * Los 2 juegos nuevos están bloqueados hasta cfg.date (día del evento).
  * 4 toques rápidos sobre el botón 📷 en NavBar = desbloqueo admin (mismo mecanismo).
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { T, btnStyle, cardStyle } from '../themes.js'
 import BgLayer from '../components/BgLayer.jsx'
 import BackButton from '../components/BackButton.jsx'
@@ -76,6 +76,29 @@ export default function GamesHub({ cfg, nav }) {
   const isKawaii = cfg.style === 'kawaii'
   const secsLeft = useSecondsLeft(cfg.date)
   const isLocked = secsLeft > 0
+
+  // 5-tap admin unlock por card — persiste en sessionStorage
+  const [adminUnlocked, setAdminUnlocked] = useState(() => {
+    try {
+      return new Set(JSON.parse(sessionStorage.getItem('games_admin_unlock') || '[]'))
+    } catch { return new Set() }
+  })
+  const tapTimesRef = useRef({})   // { [gameId]: [timestamps] }
+
+  const handleLockedTap = (gameId) => {
+    const now = Date.now()
+    const prev = (tapTimesRef.current[gameId] || []).filter(t => now - t < 2000)
+    const next = [...prev, now]
+    tapTimesRef.current[gameId] = next
+    if (next.length >= 5) {
+      tapTimesRef.current[gameId] = []
+      setAdminUnlocked(s => {
+        const updated = new Set([...s, gameId])
+        sessionStorage.setItem('games_admin_unlock', JSON.stringify([...updated]))
+        return updated
+      })
+    }
+  }
 
   return (
     <div style={{
@@ -166,19 +189,24 @@ export default function GamesHub({ cfg, nav }) {
 
         {/* ── Juegos bloqueados / desbloqueados ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {GAMES_LOCKED.map(g => (
+          {GAMES_LOCKED.map(g => {
+            const cardLocked = isLocked && !adminUnlocked.has(g.id)
+            return (
             <div
               key={g.id}
-              onClick={() => !isLocked && nav(g.id)}
+              onClick={() => {
+                if (cardLocked) { handleLockedTap(g.id); return }
+                nav(g.id)
+              }}
               style={{
                 position: 'relative',
                 ...cardStyle(t),
                 padding: '20px 18px',
                 display: 'flex', gap: 16, alignItems: 'center',
-                border: `1px solid ${isLocked ? 'rgba(255,215,0,0.18)' : g.color + '33'}`,
-                cursor: isLocked ? 'default' : 'pointer',
+                border: `1px solid ${cardLocked ? 'rgba(255,215,0,0.18)' : g.color + '33'}`,
+                cursor: 'pointer',
                 transition: 'all 0.18s',
-                animation: isLocked ? 'lock-pulse 2.5s ease-in-out infinite' : 'none',
+                animation: cardLocked ? 'lock-pulse 2.5s ease-in-out infinite' : 'none',
                 overflow: 'hidden',
               }}
             >
@@ -190,23 +218,23 @@ export default function GamesHub({ cfg, nav }) {
                 border: `1px solid ${g.color}44`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 32, flexShrink: 0,
-                filter: isLocked ? 'grayscale(0.5) brightness(0.6)' : 'none',
+                filter: cardLocked ? 'grayscale(0.5) brightness(0.6)' : 'none',
                 transition: 'filter 0.3s',
               }}>{g.emoji}</div>
-              <div style={{ flex: 1, minWidth: 0, filter: isLocked ? 'grayscale(0.3) brightness(0.6)' : 'none', transition: 'filter 0.3s' }}>
+              <div style={{ flex: 1, minWidth: 0, filter: cardLocked ? 'grayscale(0.3) brightness(0.6)' : 'none', transition: 'filter 0.3s' }}>
                 <div style={{
-                  fontFamily: t.fH, color: isLocked ? t.fg2 : g.color,
+                  fontFamily: t.fH, color: cardLocked ? t.fg2 : g.color,
                   fontSize: 'clamp(10px,2.8vw,14px)', marginBottom: 6,
                 }}>{isKawaii ? g.titleK : g.title}</div>
                 <div style={{ color: t.fg2, fontSize: 'clamp(11px,2.8vw,13px)', lineHeight: 1.45 }}>{g.desc}</div>
-                {!isLocked && (
+                {!cardLocked && (
                   <div style={{ color: g.color, fontSize: 10, marginTop: 4, opacity: 0.7 }}>{g.teaser}</div>
                 )}
               </div>
-              {!isLocked && <div style={{ color: g.color, fontSize: 20, opacity: 0.7, flexShrink: 0 }}>›</div>}
+              {!cardLocked && <div style={{ color: g.color, fontSize: 20, opacity: 0.7, flexShrink: 0 }}>›</div>}
 
               {/* ── Overlay bloqueado ── */}
-              {isLocked && (
+              {cardLocked && (
                 <div style={{
                   position: 'absolute', inset: 0,
                   background: 'rgba(5,3,20,0.78)',
@@ -251,7 +279,7 @@ export default function GamesHub({ cfg, nav }) {
                 </div>
               )}
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Acceso al ranking */}
