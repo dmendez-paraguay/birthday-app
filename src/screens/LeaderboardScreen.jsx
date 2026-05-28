@@ -4,12 +4,15 @@ import BgLayer from '../components/BgLayer.jsx'
 import BackButton from '../components/BackButton.jsx'
 import { subscribeLeaderboard } from '../lib/db.js'
 import { subscribeShooterLeaderboard } from '../game/firebase.js'
+import { subscribeMinigameLeaderboard } from '../lib/minigames.js'
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
 const TABS = [
   { id: 'balloon', label: '🎈 Globos',        labelK: '🎈 Globos'       },
   { id: 'shooter', label: '🚀 Space Blaster',  labelK: '🚀 Space Blaster' },
+  { id: 'pinata',  label: '🪅 Piñata Bash',   labelK: '🪅 Piñata'       },
+  { id: 'memory',  label: '🧩 Memoria',        labelK: '🧩 Memoria'      },
 ]
 
 export default function LeaderboardScreen({ cfg, nav }) {
@@ -28,7 +31,11 @@ export default function LeaderboardScreen({ cfg, nav }) {
       unsubRef.current = null
     }
 
-    const fn = which === 'balloon' ? subscribeLeaderboard : subscribeShooterLeaderboard
+    const fn = which === 'balloon'
+      ? subscribeLeaderboard
+      : which === 'shooter'
+        ? subscribeShooterLeaderboard
+        : (cb) => subscribeMinigameLeaderboard(which, cb)
     unsubRef.current = fn(data => {
       // detect truly new IDs (not in knownIds yet)
       const incoming = new Set(data.map(e => e.id))

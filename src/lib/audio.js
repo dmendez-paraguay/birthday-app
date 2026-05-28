@@ -13,20 +13,25 @@ let mTimer = null
 
 function getCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)()
-  if (ctx.state === 'suspended') ctx.resume()
+  // Solo reanudar si la página está visible — evita que el loop de música
+  // reactive el contexto cuando la app está en background.
+  if (ctx.state === 'suspended' && !document.hidden) ctx.resume()
   return ctx
 }
 
 // ── Page Visibility API ───────────────────────────────────────
-// Suspende el AudioContext al pasar a segundo plano y lo reanuda
-// al volver, evitando que la música siga sonando con la app minimizada.
+// Al pasar a background: suspender contexto y cancelar el timer del loop.
+// Al volver al primer plano: reanudar contexto y reiniciar el loop.
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return
     if (document.hidden) {
       ctx.suspend()
+      if (mTimer) { clearTimeout(mTimer); mTimer = null }
     } else if (musicOn && !_muted) {
       ctx.resume()
+      musicOn = false      // resetear para que startMusic() no haga early return
+      Audio.startMusic()   // reiniciar el loop desde cero
     }
   })
 }
@@ -86,13 +91,14 @@ export const Audio = {
     const mel = [261, 294, 329, 392, 349, 294, 261, 294, 329, 392, 440, 392, 329, 261]
     const play = () => {
       if (!musicOn || _muted) return
+      // Si la página está oculta, no programar notas ni nuevo timer.
+      // visibilitychange (visible) llamará startMusic() para reiniciar.
+      if (document.hidden) return
       try {
         const c = getCtx(), t = c.currentTime
         mel.forEach((f, i) => note(f, t + i * 0.33, 0.28, 0.055, 'triangle'))
         ;[130, 146, 164, 130].forEach((f, i) => note(f, t + i * 1.1, 0.9, 0.04, 'sine'))
       } catch (e) {}
-      // setTimeout fuera del try-catch: el loop nunca muere aunque el
-      // AudioContext lance una excepción en una iteración puntual.
       mTimer = setTimeout(play, mel.length * 330 + 400)
     }
     play()
