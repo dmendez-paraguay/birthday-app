@@ -9,10 +9,10 @@ import { subscribeMinigameLeaderboard } from '../lib/minigames.js'
 const MEDALS = ['🥇', '🥈', '🥉']
 
 const TABS = [
-  { id: 'balloon', label: '🎈 Globos',        labelK: '🎈 Globos'       },
-  { id: 'shooter', label: '🚀 Space Blaster',  labelK: '🚀 Space Blaster' },
-  { id: 'pinata',  label: '🪅 Piñata Bash',   labelK: '🪅 Piñata'       },
-  { id: 'memory',  label: '🧩 Memoria',        labelK: '🧩 Memoria'      },
+  { id: 'balloon', label: '🎈 Globos',   labelK: '🎈 Globos'  },
+  { id: 'shooter', label: '🚀 Blaster',  labelK: '🚀 Blaster' },
+  { id: 'pinata',  label: '🪅 Piñata',  labelK: '🪅 Piñata'  },
+  { id: 'memory',  label: '🧩 Memoria', labelK: '🧩 Memoria' },
 ]
 
 export default function LeaderboardScreen({ cfg, nav }) {
@@ -143,10 +143,10 @@ export default function LeaderboardScreen({ cfg, nav }) {
                 onClick={() => setTab(id)}
                 style={{
                   flex: 1,
-                  padding: '9px 6px',
+                  padding: '9px 4px',
                   fontFamily: t.fH,
-                  fontSize: 'clamp(7px,2vw,10px)',
-                  letterSpacing: '0.5px',
+                  fontSize: 'clamp(6px,1.6vw,9px)',
+                  letterSpacing: '0.3px',
                   cursor: 'pointer',
                   borderRadius: `calc(${t.r} - 2px)`,
                   border: 'none',
@@ -156,6 +156,10 @@ export default function LeaderboardScreen({ cfg, nav }) {
                   color: active ? t.a1 : t.fg2,
                   boxShadow: active ? `0 0 10px ${t.a1}30` : 'none',
                   transition: 'all 0.18s',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
                 }}
               >
                 {isKawaii ? labelK : label}
@@ -194,7 +198,7 @@ export default function LeaderboardScreen({ cfg, nav }) {
             textAlign: 'center', color: t.fg2, padding: 50,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
           }}>
-            <div style={{ fontSize: 56 }}>{tab === 'balloon' ? '🎈' : '🚀'}</div>
+            <div style={{ fontSize: 56 }}>{{ balloon: '🎈', shooter: '🚀', pinata: '🪅', memory: '🧩' }[tab] ?? '🎮'}</div>
             <div style={{ fontFamily: t.fH, fontSize: 'clamp(9px,2.5vw,12px)', lineHeight: 1.8 }}>
               {isKawaii ? '¡Sé el primero en jugar! 🌟' : '¡SÉ EL PRIMERO EN JUGAR!'}
             </div>
